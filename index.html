@@ -13,32 +13,1000 @@
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
 <style>
-:root{--bg:#faf8f5;--ink:#1f1d1b;--sub:#8a847d;--accent:#E8691A}
-html,body{margin:0;height:100%;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif}
-#frame{position:fixed;left:0;right:0;top:env(safe-area-inset-top);bottom:env(safe-area-inset-bottom);width:100%;height:calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom));border:0;background:var(--bg);opacity:0;transition:opacity .35s}
-#frame.on{opacity:1}
-.splash{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;background:var(--bg)}
-.ring{position:relative;width:88px;height:88px;display:flex;align-items:center;justify-content:center}
-.ring svg{width:88px;height:88px;animation:rot 1.5s cubic-bezier(.5,.1,.5,.9) infinite}
-.dot{position:absolute;width:20px;height:20px;border-radius:50%;background:var(--ink);animation:pulse 1.5s ease-in-out infinite}
-.nm{letter-spacing:.34em;font-size:14px;color:var(--ink);font-weight:500;text-align:center;padding-left:.34em;animation:fade 1.5s ease-in-out infinite}
-.nm small{display:block;letter-spacing:.22em;font-size:10px;color:var(--sub);margin-top:9px;font-weight:400}
+:root{--accent:#E8691A;--ink:#1f1d1b;--bg:#faf8f5;--card:#fff;--sub:#8a847d;--line:#ece8e2;--soft:#f3efe9;--over:#c0392b;--ok:#4f7a63;--shadow:0 1px 2px rgba(31,29,27,.04),0 10px 30px rgba(31,29,27,.05)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Helvetica Neue",sans-serif;font-size:15px;letter-spacing:.01em;font-feature-settings:"palt"}
+body{padding-bottom:calc(120px + env(safe-area-inset-bottom))}
+header{padding:calc(14px + env(safe-area-inset-top)) 22px 4px}
+.brand{font-size:13px;letter-spacing:.28em;color:var(--sub);font-weight:500}
+.brand i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-right:8px;vertical-align:1px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+header .chips{margin-top:10px}
+.chip{border:1px solid var(--line);background:transparent;border-radius:999px;padding:7px 15px;font-size:13px;color:var(--ink);font-family:inherit}
+.chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+main{padding:0 18px}
+.card{background:var(--card);border-radius:24px;padding:22px 20px;margin:14px 0;box-shadow:var(--shadow)}
+h2{font-size:12px;letter-spacing:.18em;color:var(--sub);font-weight:500;margin:0 0 12px}
+.sub{color:var(--sub);font-size:12.5px}
+.big{font-size:54px;font-weight:200;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.hero{text-align:center;padding:26px 20px 22px;position:relative}
+.hero .me{position:absolute;left:16px;top:14px;height:54px;width:auto;opacity:.92;pointer-events:none}
+.ringwrap{position:relative;width:196px;height:196px;margin:2px auto 0}
+.ringwrap svg{position:absolute;inset:0;transform:rotate(-90deg)}
+.ringin{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ringin .big{font-size:48px}
+.pfc{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:22px;text-align:left}
+.pfc b{font-weight:500;font-size:17px;font-variant-numeric:tabular-nums}
+.bar{height:3px;border-radius:2px;background:var(--soft);overflow:hidden;margin-top:7px}
+.bar>i{display:block;height:100%;border-radius:2px;background:var(--accent)}
+.datebar{display:flex;align-items:center;justify-content:center;gap:6px;margin:10px 0 0}
+.datebar b{font-weight:500;font-size:15px;min-width:130px;text-align:center}
+.datebar button{border:0;background:none;font-size:20px;padding:6px 14px;color:var(--sub);font-family:inherit}
+.meal{padding:16px 0;border-top:1px solid var(--line)}
+.meal:first-of-type{border-top:0;padding-top:2px}
+.mh{display:flex;gap:12px;align-items:baseline;justify-content:space-between}
+.mh .t{min-width:0;flex:1}
+.mh .t b{display:block;font-weight:500;font-size:15.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mh .k{font-size:22px;font-weight:300;white-space:nowrap;font-variant-numeric:tabular-nums}
+.mh .k small{font-size:11px;color:var(--sub);margin-left:2px}
+.strip{display:flex;gap:6px;overflow-x:auto;margin-top:10px;padding-bottom:2px;scrollbar-width:none}
+.strip::-webkit-scrollbar{display:none}
+.strip img{width:62px;height:62px;border-radius:14px;object-fit:cover;flex:none;background:var(--soft)}
+button{font-family:inherit}
+button.primary{background:var(--ink);color:#fff;border:0;border-radius:999px;padding:16px;font-size:15.5px;font-weight:500;width:100%;letter-spacing:.04em}
+button.primary:disabled{opacity:.45}
+button.ghost{background:transparent;border:1px solid var(--line);border-radius:999px;padding:13px;font-size:14.5px;width:100%;color:var(--ink)}
+button.danger,.danger{color:var(--over)}
+button.link{background:none;border:0;color:var(--sub);font-size:13px;padding:6px}
+.fab{position:fixed;left:0;right:0;bottom:calc(84px + env(safe-area-inset-bottom));z-index:6;text-align:center;pointer-events:none}
+.fab button{pointer-events:auto;background:var(--accent);color:#fff;border:0;border-radius:999px;padding:15px 28px;font-size:15px;font-weight:500;letter-spacing:.06em;box-shadow:0 10px 28px rgba(232,105,26,.35)}
+nav{position:fixed;left:14px;right:14px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:7;background:rgba(255,255,255,.97);border-radius:26px;display:flex;padding:6px;box-shadow:0 8px 30px rgba(31,29,27,.10);border:1px solid rgba(255,255,255,.7)}
+nav button{flex:1;border:0;background:none;padding:9px 0 7px;font-size:10.5px;color:var(--sub);letter-spacing:.06em;border-radius:20px}
+nav button.on{color:var(--ink);font-weight:600;background:var(--soft)}
+nav button svg{display:block;margin:0 auto 3px;width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+label.f{display:block;font-size:11.5px;letter-spacing:.1em;color:var(--sub);margin:14px 0 6px}
+input,select,textarea{width:100%;font-size:16px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fff;color:var(--ink);font-family:inherit;-webkit-appearance:none;appearance:none}
+select{background-image:linear-gradient(45deg,transparent 50%,var(--sub) 50%),linear-gradient(135deg,var(--sub) 50%,transparent 50%);background-position:calc(100% - 20px) 50%,calc(100% - 15px) 50%;background-size:5px 5px;background-repeat:no-repeat}
+input:focus,select:focus,textarea:focus{outline:0;border-color:var(--ink)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.grid4 label{font-size:10.5px;color:var(--sub);letter-spacing:.06em}
+.grid4 input{padding:10px 6px;text-align:right}
+.modal{position:fixed;inset:0;z-index:20;background:rgba(31,29,27,.38);display:flex;align-items:flex-end;}
+.sheet{background:var(--bg);width:100%;max-height:94vh;overflow:auto;border-radius:30px 30px 0 0;padding:10px 20px calc(28px + env(safe-area-inset-bottom))}
+.sheet:before{content:"";display:block;width:38px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 14px}
+.sheet h3{margin:0 0 6px;font-size:18px;font-weight:500;letter-spacing:.04em}
+.thumbs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.thumbs>div{position:relative}
+.thumbs img{width:76px;height:76px;object-fit:cover;border-radius:16px;display:block}
+.thumbs b{position:absolute;top:-6px;right:-6px;background:var(--ink);color:#fff;border-radius:50%;width:22px;height:22px;text-align:center;line-height:22px;font-size:13px;font-weight:400}
+.pick2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 0}
+.pick2 button{border:1px dashed #d9d2c8;background:#fff;border-radius:18px;padding:18px 8px;font-size:13.5px;color:var(--ink);line-height:1.5}
+.pick2 button span{display:block;font-size:22px;color:var(--accent)}
+.item{background:#fff;border-radius:18px;padding:12px;margin:10px 0;box-shadow:var(--shadow)}
+.item .r{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+.badge{display:inline-block;border-radius:999px;padding:3px 10px;font-size:11px;background:var(--soft);color:var(--sub);vertical-align:2px;letter-spacing:.06em;font-weight:400}
+.note{background:var(--soft);border-radius:16px;padding:12px 14px;font-size:13px;line-height:1.7;margin:12px 0}
+.scale{display:flex;gap:6px;margin:12px 0 6px}
+.scale button{flex:1;border:1px solid var(--line);background:#fff;border-radius:999px;padding:9px 0;font-size:13px}
+#toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top));z-index:50;max-width:calc(100% - 40px);background:rgba(31,29,27,.88);color:#fff;border-radius:999px;padding:10px 20px;font-size:13px;letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 8px 24px rgba(31,29,27,.2);opacity:0;transform:translate(-50%,-14px);pointer-events:none;transition:opacity .25s,transform .3s cubic-bezier(.2,.8,.2,1)}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+.gate{max-width:420px;margin:12vh auto 0;padding:0 24px}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:s 1s linear infinite;vertical-align:-2px;margin-right:8px}
+@keyframes s{to{transform:rotate(360deg)}}
+/* 目標ヘッダー */
+.goal{margin-top:2px;cursor:pointer}
+.goal .gl{font-size:11px;letter-spacing:.2em;color:var(--sub)}
+.goal .gt{font-size:24px;font-weight:300;letter-spacing:-.01em;margin-top:3px;font-variant-numeric:tabular-nums}
+.goal .gt span{font-size:12.5px;color:var(--accent);margin-left:10px;letter-spacing:.04em;font-weight:500}
+.gbar{height:3px;border-radius:2px;background:var(--soft);margin:9px 0 7px;overflow:hidden;max-width:280px}
+.gbar i{display:block;height:100%;background:var(--accent);border-radius:2px}
+.gs{font-size:11.5px;color:var(--sub);line-height:1.6}
+.xclose{position:sticky;top:6px;display:block;margin:-6px 0 -30px auto;width:36px;height:36px;border-radius:50%;border:0;background:var(--soft);color:var(--ink);font-size:21px;line-height:36px;padding:0;z-index:3}
+.card{position:relative}
+.hero .me2{position:absolute;right:16px;top:14px;height:50px;width:auto;opacity:.92;pointer-events:none}
+.deco{position:absolute;right:18px;top:14px;height:42px;width:auto;pointer-events:none}
+.mood{height:26px;width:auto;vertical-align:-7px;margin-left:8px}
+.empty{text-align:center;padding:4px 0 6px}
+.empty img{height:72px;width:auto;display:block;margin:0 auto 8px}
+.add-ph{width:58px;height:58px;border:1px dashed #d9d2c8;border-radius:14px;display:flex;align-items:center;justify-content:center;color:var(--accent);font-size:22px;background:#fff}
+.fab button+button{margin-left:10px}
+.fab button.ink{background:var(--ink);box-shadow:0 10px 28px rgba(31,29,27,.25)}
+.sub2{font-size:11.5px;color:var(--sub);letter-spacing:.06em}
+.chips.wrap{gap:7px}
+.chip.sm{padding:6px 12px;font-size:12.5px}
+.exrow{display:flex;justify-content:space-between;align-items:baseline;padding:13px 0;border-top:1px solid var(--line)}
+.exrow:first-of-type{border-top:0;padding-top:2px}
+.exrow b{font-weight:500}
+.exrow .k{font-size:20px;font-weight:300}
+.exrow .k small{font-size:11px;color:var(--sub);margin-left:2px}
+/* ローディング */
+.splash{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;background:var(--bg);z-index:30}
+.splash svg{width:88px;height:88px;animation:rot 1.5s cubic-bezier(.5,.1,.5,.9) infinite}
+.splash .dot{position:absolute;width:20px;height:20px;border-radius:50%;background:var(--ink);animation:pulse 1.5s ease-in-out infinite}
+.splash .ring{position:relative;width:88px;height:88px;display:flex;align-items:center;justify-content:center}
+.splash .nm{letter-spacing:.34em;font-size:14px;color:var(--ink);font-weight:500;text-align:center;padding-left:.34em;animation:fade 1.5s ease-in-out infinite}
+.splash .nm small{display:block;letter-spacing:.22em;font-size:10px;color:var(--sub);margin-top:9px;font-weight:400}
 @keyframes rot{to{transform:rotate(360deg)}}
 @keyframes pulse{0%,100%{transform:scale(.85);opacity:.9}50%{transform:scale(1.15);opacity:1}}
 @keyframes fade{0%,100%{opacity:.55}50%{opacity:1}}
+.sk{background:linear-gradient(90deg,#f1ece5 25%,#f9f6f1 50%,#f1ece5 75%);background-size:200% 100%;animation:sh 1.4s ease-in-out infinite;border-radius:12px}
+@keyframes sh{to{background-position:-200% 0}}
+table{width:100%;border-collapse:collapse}
+td{padding:12px 0;border-top:1px solid var(--line)}
+tr:first-child td{border-top:0}
+td:last-child{text-align:right}
+
+/* ---- v24 ブラッシュアップ ---- */
+.sub{font-size:13px}
+h2{font-size:11.5px;letter-spacing:.2em;display:flex;align-items:center;gap:8px}
+h2:before{content:"";width:3px;height:11px;border-radius:2px;background:var(--accent)}
+.card{border-radius:26px;box-shadow:0 1px 2px rgba(31,29,27,.04),0 12px 32px rgba(31,29,27,.06)}
+.hero{background:linear-gradient(180deg,#fff 0%,#fffaf5 100%)}
+.ringwrap{filter:drop-shadow(0 6px 14px rgba(232,105,26,.18))}
+.ringin .big{font-size:54px;font-weight:200}
+.rarc{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
+.pfc b{font-size:18px}
+.bar{height:4px}
+.goal .gt{font-size:26px}
+.goal .gs{font-size:12px}
+.gbar{height:4px;max-width:300px}
+.tag{display:inline-block;font-size:10.5px;line-height:1;padding:3px 8px;border-radius:999px;background:var(--soft);color:var(--sub);margin-right:7px;vertical-align:1px;letter-spacing:.06em}
+.tag.t-朝食{background:#fdeede;color:#c2570f}
+.tag.t-昼食{background:#fde3d0;color:#b8480a}
+.tag.t-夕食{background:#efe6df;color:#6f5444}
+.tag.t-間食{background:#f3efe9;color:#8a847d}
+.mh .k{font-size:24px}
+.mh .t b{font-size:16px}
+.meal,.exrow{transition:background .15s}
+.meal:active,.exrow:active{background:#faf6f0}
+.strip img{width:66px;height:66px;border-radius:16px}
+nav{border-radius:28px;box-shadow:0 10px 34px rgba(31,29,27,.12)}
+nav button{transition:background .2s,color .2s}
+nav button.on{color:var(--accent);background:#fdf1e7}
+button.primary,.fab button,.chip{transition:transform .12s}
+button.primary:active,.fab button:active,.chip:active{transform:scale(.97)}
+.fab button{padding:16px 26px;font-size:15.5px}
+.datebar b{font-size:16px}
+.datebar button{width:44px;height:36px;border-radius:12px}
+.datebar button:active{background:var(--soft)}
+@keyframes up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+main>*{animation:up .4s cubic-bezier(.2,.8,.2,1) both}
+main>*:nth-child(2){animation-delay:.05s}
+main>*:nth-child(3){animation-delay:.1s}
+main>*:nth-child(4){animation-delay:.15s}
+@keyframes sheetin{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+.sheet{border-radius:32px 32px 0 0;box-shadow:0 -10px 40px rgba(31,29,27,.15);animation:sheetin .3s cubic-bezier(.2,.8,.2,1)}
+.chip.on{box-shadow:0 4px 12px rgba(31,29,27,.18)}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(232,105,26,.12)}
+.aiedit{margin-top:16px;padding:14px;border-radius:18px;background:#fff7f0;border:1px solid #f6dcc8}.aiedit textarea{background:#fff}
+.share{background:#fff;border:1px solid var(--line);border-radius:20px;padding:14px 16px 12px;margin-top:4px}
+.share .sv{display:flex;align-items:baseline;gap:2px;margin-bottom:10px}
+.share .sv b{font-size:40px;font-weight:200;line-height:1;font-variant-numeric:tabular-nums;color:var(--accent)}
+.share .sv span{font-size:15px;color:var(--accent)}
+.share .sv small{margin-left:12px;font-size:12.5px;color:var(--sub)}
+.share input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:28px;padding:0;border:0;background:transparent;box-shadow:none}
+.share input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:linear-gradient(90deg,var(--accent) var(--p),var(--soft) var(--p))}
+.share input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;border-radius:50%;background:#fff;border:0;margin-top:-11px;box-shadow:0 2px 8px rgba(31,29,27,.25),0 0 0 1px rgba(31,29,27,.06)}
+.share .chips{margin-top:8px}
+.chip i{display:block;font-style:normal;font-size:10px;opacity:.6;margin-top:1px}
+.chip.sm{line-height:1.25}
+.rest small{display:block;font-size:12px;color:var(--sub);letter-spacing:.08em}
+.rest .rv{font-size:17px;margin-top:4px;color:var(--ink)}
+.rest .rv b{font-size:40px;font-weight:300;color:var(--accent);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.rest.over .rv,.rest.over .rv b{color:var(--over)}
+.eq{display:flex;align-items:flex-end;justify-content:center;gap:14px;margin-top:14px}
+.rest{padding-top:14px;border-top:1px solid var(--line)}
+.eq>div{text-align:center;min-width:64px}
+.eq small{display:block;font-size:11px;color:var(--sub);letter-spacing:.1em}
+.eq b{font-size:20px;font-weight:400;font-variant-numeric:tabular-nums}
+.eq i{font-style:normal;color:var(--sub);font-size:16px;padding-bottom:2px}
+.eq .net b{color:var(--ink);font-weight:600}
+.fab button{padding:15px 20px;font-size:15px}
+.fab button+button{margin-left:8px}
+.fab button.ghostfab{background:#fff;color:var(--ink);box-shadow:0 10px 28px rgba(31,29,27,.14);border:1px solid var(--line)}
+.wd{display:block;font-size:12px;color:var(--ok);margin-top:2px;text-align:right}.wd.up{color:var(--over)}
+.wbox{display:flex;align-items:center;justify-content:center;gap:16px;margin:18px 0 4px}
+.wstep{width:56px;height:56px;border-radius:50%;border:1px solid var(--line);background:#fff;font-size:26px;color:var(--ink);line-height:1;padding:0;box-shadow:var(--shadow)}
+.wstep:active{background:var(--soft)}
+.wnum{display:flex;align-items:baseline;gap:4px}
+.wnum input{width:150px;text-align:center;font-size:54px;font-weight:200;border:0;background:transparent;padding:4px 0;letter-spacing:-.02em}
+.wnum input:focus{box-shadow:none}
+.wnum span{font-size:16px;color:var(--sub)}
+.anarow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.anarow small{display:block;font-size:11.5px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px}
 </style>
 </head>
 <body>
-<div class="splash" id="splash"><div class="ring"><svg viewBox="0 0 88 88"><circle cx="44" cy="44" r="36" fill="none" stroke="#eadfd0" stroke-width="5"/><circle cx="44" cy="44" r="36" fill="none" stroke="#E8691A" stroke-width="5" stroke-linecap="round" stroke-dasharray="110 226"/></svg><span class="dot"></span></div><div class="nm">パシャカロ<small>PHOTO CALORIE</small></div></div>
-<iframe id="frame" title="パシャカロ" allow="camera; clipboard-write"></iframe>
+<div id="toast"></div>
+<div id="app"><div class="splash"><div class="ring"><svg viewBox="0 0 88 88"><circle cx="44" cy="44" r="36" fill="none" stroke="#eadfd0" stroke-width="5"/><circle cx="44" cy="44" r="36" fill="none" stroke="#E8691A" stroke-width="5" stroke-linecap="round" stroke-dasharray="110 226"/></svg><span class="dot"></span></div><div class="nm">パシャカロ<small>PHOTO CALORIE</small></div></div></div>
+<input type="file" id="file" accept="image/*" multiple style="display:none">
 <script>
-var EXEC = 'https://script.google.com/macros/s/AKfycbw4uYQmAvAKRmES5aOQZBJfrTs0I1OG4QKpCJgnvNbjT6iLGwY_rGlh-WlhfCiNMwVs/exec';
-var f = document.getElementById('frame'), s = document.getElementById('splash');
-f.src = EXEC + '?v=' + Date.now();
-f.addEventListener('load', function () {
-  f.classList.add('on');
-  setTimeout(function () { s.style.display = 'none'; }, 400);
-});
+var $ = function (s) { return document.querySelector(s); };
+var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
+var MAX_IMG = 10;
+var API_URL = 'https://script.google.com/macros/s/AKfycbw4uYQmAvAKRmES5aOQZBJfrTs0I1OG4QKpCJgnvNbjT6iLGwY_rGlh-WlhfCiNMwVs/exec';
+function run(fn) {
+  var args = Array.prototype.slice.call(arguments, 1);
+  // text/plain で送るとCORSのプリフライトが不要になる(GAS Web App向けの定石)
+  return fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn: fn, args: args }) })
+    .then(function (r) { return r.json(); })
+    .then(function (j) { if (!j.ok) throw new Error(j.error || '通信エラー'); return j.result; });
+}
+function api(fn) { return run.apply(null, [fn, ''].concat(Array.prototype.slice.call(arguments, 1))); }
+function toast(msg, ms) {
+  var t = $('#toast'); t.textContent = msg; t.className = 'on';
+  clearTimeout(toast.h); toast.h = setTimeout(function () { t.className = ''; }, ms || 2600);
+}
+function pad(n) { return (n < 10 ? '0' : '') + n; }
+function fmtDate(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+function parseDate(s) { var a = s.split('-'); return new Date(+a[0], +a[1] - 1, +a[2]); }
+function addDays(s, n) { var d = parseDate(s); d.setDate(d.getDate() + n); return fmtDate(d); }
+function dlabel(s) { var d = parseDate(s), w = '日月火水木金土'[d.getDay()]; return (d.getMonth() + 1) + '/' + d.getDate() + '（' + w + '）'; }
+function r1(n) { return Math.round(n * 10) / 10; }
+
+var SPLASH = '<div class="splash"><div class="ring"><svg viewBox="0 0 88 88"><circle cx="44" cy="44" r="36" fill="none" stroke="#eadfd0" stroke-width="5"/><circle cx="44" cy="44" r="36" fill="none" stroke="#E8691A" stroke-width="5" stroke-linecap="round" stroke-dasharray="110 226"/></svg><span class="dot"></span></div><div class="nm">パシャカロ<small>PHOTO CALORIE</small></div></div>';
+function skel() {
+  return '<div class="card hero"><div class="sk" style="width:130px;height:12px;margin:0 auto 20px"></div><div class="sk" style="width:176px;height:176px;border-radius:50%;margin:0 auto"></div><div class="sk" style="width:170px;height:12px;margin:22px auto 0"></div></div><div class="card"><div class="sk" style="width:90px;height:11px;margin-bottom:18px"></div><div class="sk" style="height:46px;margin-bottom:12px"></div><div class="sk" style="height:46px"></div></div>';
+}
+var ABE = 'data:image/png;base64,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';
+var DECO = {tanaka:'data:image/png;base64,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',happy:'data:image/png;base64,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',wow:'data:image/png;base64,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',walk:'data:image/png;base64,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',bear:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEIAAACACAMAAACIqk9lAAAASFBMVEX+8NAAAAD++/X+8txyb2v+8dmVkoz//7h4eHiamJWmpKKsq6v7traEgnz//3///wD/f3/QyLT/AACAfnnEu6u4uHG0amp/AAC5y+OqAAAAGHRSTlP4AAxi/aLyAwKgXw8E/QIBAvcB+/kDAwJARHQfAAAFD0lEQVR42rWaiXbjKBBF4WHQatmxOz3//6dTLEIUQjLIM/Q5HSdBV7UDRYTcDXTd4j8AKg7Y77QQWtEv2HyxA8D/rzTNLw4NoIiAG/PTPy7OhpJFRPwhTh835seJUUBAWslJ4fP3m9vN0BcwMTxikRA1409A7KVYUEcIiig57xCztPL/GKOrONib8+nVuHkpPw4lu11cQCqvZx1CHyJ+igit9yGGx2uPgPdYTlAIUac/2YI8UrKjA8wdujzgSh4JYmieCRLz4oXoCKZSY+wRlqHzXApG63ufQFIniGcxwGWeSYipAw85MoaIecoJ09RP7hejoTHKaU7EKCI6niQhCXrAmGGkIfsZKkF0JUUUV2McBno1fZ1iNcBBwYhSpAgrvUW8QhlzOi2bJqokRcedNgz2oZ40GQfzHmTvpjQgnJxOhUkOhoLWqpROqUHMciI/0Nt7DEYaJ0YjYgLZ4u7ePpjhkhTkzJH+DcSCJfQyQ8x7xMzNSR6c6O2TezbEKDMnPsSFdjPc29FPvZzCFH0e4DwuJPr9Oik/5AgLcDeF3g45DWNUBi0IBW/xiXw7BIGSRNRHC6LOjbFaErnPDhBZkqzrFYZB7eqFKq/sM9NkLW2gHPGI9BXZDkPIkjHyIp3VE80KRtxfdA/Ni46vj9Ovq53LRtB5iEcpOskLuEwUpk/6eJuy1c68hLvqP3d2lPYtiHkiCj6NCkcpiut7hxTBXRohyu34DvZtURVRcEflWL0mDtSo2SRgQ8yXhIiqiMtCWFWe8AhcFGIVQ2RFr1EMaw6x7vcuijFbxHU9glO+Q7jYEN+YwhcWcd2lYQP5EF/p4RJWPBsRereb/lYKLReBb6zpNBHd/4DQrQEquq986hAXwiIr9eIh21+sOULKC8l1iqjSiukO8ZK87tdVGobgtoCq84JOEWCIujjTaVKAO1XVScE0yRC1QZLOA4/OWkQqLUdoWRuq6Q6SpRmqEekOkpUcVOfc5laO0PWlWMd9j2II1YCI6tt1BItuR0Rj2ChLHrO7SdGC0Gvhw5qfpFN1NVfYMp+dEeoXBBXlVYKd5usROo1IfiSrR6iDbQ+EEKI5WdmuuwGxiqGE2s4pbYjAII9ArZ2btr0fXGuRWqlu0+j2bZ1sRoSWlQhHYf9tw7pkJ9teUyKFzA7VnxHl3m8L4nGEUNWhhWqELn9O2o0iO9p/LUX9yUQdS4HCZHs8U9lC14gIQ52fU8MoNbPxouMqtT2fqnxMrZACa7tRHRzqPyJW0//niLRr+hGxmj5HoAWBQuCWmg+HiLXbkSPQgihJgUPEUolgPehrUqhiLyf+oAbBukUib+TpGkSxKRWzvQahS/3O47JVQqgzBCoROEPgEKFLmb5HPAuIZWclXJMCtYi9V7fpm0P67uwmc+eSeEeSNArl77kU6qDuYb2/s236k+jcGwN+8QwNT7rhu9/vtiGMsyvZ4gruei1/CHCzIzaVi4h8cQ8iuzsKY943P8za2y4jUECQfnTJcb/FYeQ/h4hXpok3BTXVzS0d5sQWzK0/a6nu5diAiD6x1r+F24kc8T5FBDF+yHt2sr8o+ssR5NdTBIlBAqyzxyAFs4W5DycesRduG+B2n/3cRJM3iefvfo7NOW7eM/FtE/34/TZhJGFRQPQURCsgnUpyuOiyl3JICAXE74qgydgCSKZPbVqUpXjB5pIxdovE7numv2HGhNO/fHAeIYntH0n0+xujwvgXjvEmWTgpkIQAAAAASUVORK5CYII=',pointy:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEQAAACECAMAAAAeJX00AAAASFBMVEX+788AAAD9+vT+8tj+8tt0cm3+/rmUkYutrKp5eXmZl5T7tLSEgnv//3+hn53/f3+Afnj/AAD//wDUy7bBuqoAAP95dXOhoV2oFTEeAAAAGHRSTlP5AAygX/0D8RoCngP+AloC/QEB7fcBkQRZ/sKuAAAE4UlEQVR42sWa65ajIAyAIaDgtdeZff833UStEkBA7Z7lx0xPhc8kQAhJhcw2kFIrIRTQp2gTeQYAIqjtUgogcmEgBeAcBF+Pw19VZVAj2Z2FaIT0VVWRKI+TkJokqRZIXB+RNeukzruq3vhPyjMQtIEWW9PxCUpDaglKsAYx26Ygw6wKbxrJByDAVdkoUA6BQBWxt3D3II86KsaycG9FEIB9Bi7cugSSZJBCdR6C4qoEA0UZspBt8++LAhkIDDmGv1hEzB45hq+PSDmhZYSeNi/oXX1EuF34vOi59xM9CewtWx9yu7HtomCyM0AD4O4kvlREUhn1I22Hgxt80vw4z1RKEr5v9fa97SaR1kepdTK4giDDjm0LYFtjTGsfruN3RRG+E2IbDQcjRNrWWtuO0m4zlIAAFwRG68kJeQi3yNLtz2QSNCx7XgihpQBja3G0RZOMMyUPqV1t0J6ynUb/QYOYu8VhtwIIAN9jzTia1gCJYhFmSyBMG+rVyLYdDX6yyLLTsAKIdrVBW1o7GaORs21KDOvuvc/mYIdvGUT5bofEIUls07C37O8dYJAulKRbO/BIJQchSX5/rT97etcVdKE6U6uqeWYck+giSTavg/tvZsj6ofOejfkBpxeEkhZC1sgKFz8tVu4n9h01O7PWSfyo08kSb+8dOMCmFzoWaexAYJBeXLQ4+rquJ5rmcQHUIWQJ4GNHTqDpfJI4gopPHBA9f/Hw01pppWKPNowoPn+d8c7B5kDqIwymVbdC0nFRPlARgZM/QRGfK8BpCtpThMHEQbvQOcKO6ZMKCeZFzjT0PGKQ1wQhq4hrFpn1EXBRG9JHXNYG5+cLEIGzoy9D9DcgSly265cg4ksQ30hHnNs2P94SPjfJ/M57GYJ3oesQOOtsvYBRn1on4BrkwNGh3Y/ghjWXIcAvaEfM4EAezyMQGYNQUHkIoiIQPUH0NQidzfX/g6CPBWelnYPob0DAhQznIWr9+Dw3O0oCi30PrBO1QsgHuVnfUxCSBJyA/xRETEGOopgU4lmcBMRJG4hByjUePeAKNm9M6lBQD91OLigF+XSlcE1Kdj2CckkwVaXUlOYViUROBrLeh05DaL9C3UEHQRJmOAQpSgedhJRvnmROKQpR2LQPGQ6ps7xSe18+9yWBWDKZLpM1vwTuXvPjED3dO70Nkcw9PuVOnt6D6BRkkBGTDF5GI5dKHcJtDM+Ik4B0FlRFblahOklI6FAW7fkDJW/yiCQ6JolKZsvDuxzML70GiXrfNCSwyZq0Yw90BqLjtYJLEIiqo5O1jAhk+AYkJolXgwtmpxACycX2LyE3tr3T1bfAK21H/a5fK4HUs7OCRPktrKpEITevUAIZiIotey4hZCDBQvl4As3sehAyv9XZ3S+stGDhKa0Os6wxWs4J6pd5LYh7b1oqbCQLZ45RzNIf0e+qN9T6O5bTzYHqm+mr+wah0dX8d66x7EO2EOVl6IcAZvnyXa3tnoV89HnPgleL+vDqN0plRmmTkBtVulD3fobYCWKlNo4oxqYlsVjMwX7I6B1BqEqzUnqa4+TsYBlme2fvrgjb9ijfnSYJZA6yvrJH1d0HVBWkgmB22ROE9MDJpfqQcHrbZi2zQKaGbmd1eipBcqHxBQ11b2z+dwXNNDvtCFLa2G8FIj+2+Av68SfEYVCdlAAAAABJRU5ErkJggg=='};
+function deco(k, cls) { return '<img class="'+(cls||'deco')+'" src="'+DECO[k]+'" alt="">'; }
+var TYPES = ['朝食', '昼食', '夕食', '間食'];
+var S = { cache: {}, wl: {}, exs: [], me: '', users: [], viewId: '', today: '', date: '', tab: 'day', meals: [], range: 14 };
+var ICON = {
+  day: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/></svg>',
+  ana: '<svg viewBox="0 0 24 24"><path d="M5 20V11M12 20V4M19 20v-7"/></svg>',
+  weight: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="5"/><path d="M8.5 10a5 5 0 0 1 7 0M12 13.5l2-2.6"/></svg>',
+  settings: '<svg viewBox="0 0 24 24"><path d="M4 8h9M17 8h3M4 16h3M11 16h9"/><circle cx="15" cy="8" r="2"/><circle cx="9" cy="16" r="2"/></svg>'
+};
+
+function dirty() { S.cache = {}; }
+function swr(key, fetchFn, render, isActive) {
+  var c = S.cache[key];
+  if (c) render(c.data); else $('#main').innerHTML = skel();
+  if (c) return; /* キャッシュがあれば通信しない。最新化は保存後(dirty)かアプリ再起動 */
+  fetchFn().then(function (d) {
+    var s = JSON.stringify(d);
+    if (c && c.s === s) return;
+    S.cache[key] = { s: s, data: d };
+    if (isActive()) render(d);
+  }).catch(function (e) { if (!c) $('#main').innerHTML = '<p>' + esc(e.message) + '</p>'; });
+}
+function untilText(to) {
+  var a = parseDate(S.today), b = parseDate(to);
+  if (b <= a) return null;
+  var m = (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth());
+  var t = new Date(a.getFullYear(), a.getMonth() + m, a.getDate());
+  if (t > b) { m--; t = new Date(a.getFullYear(), a.getMonth() + m, a.getDate()); }
+  var d = Math.round((b - t) / 86400000);
+  return (m > 0 ? m + 'ヶ月' : '') + d + '日';
+}
+function curKg(uid) {
+  var l = S.wl[uid] || [];
+  return r1(l.length ? +l[l.length - 1].kg : (+user(uid).weight || 60));
+}
+function goalHeader() {
+  var u = user(S.viewId);
+  if (!(+u.goalKg > 0)) return '<div class="brand"><i></i>パシャカロ</div>';
+  var cur = curKg(S.viewId), start = +u.startKg || cur, tgt = r1(start - u.goalKg), left = r1(cur - tgt);
+  var pct = Math.max(0, Math.min(100, (start - cur) / u.goalKg * 100));
+  var days = u.goalDate ? Math.ceil((parseDate(u.goalDate) - parseDate(S.today)) / 86400000) : null;
+  var sub;
+  if (left <= 0) sub = '目標達成！　現在 ' + cur + ' kg';
+  else {
+    sub = '現在 ' + cur + ' kg → 目標 ' + tgt + ' kg（あと ' + left + ' kg';
+    if (days > 0) sub += '・週 ' + r1(left / (days / 7)) + ' kg';
+    sub += '）';
+  }
+  return '<div class="goal" data-goal="1"><div class="gl">GOAL　' + esc(u.goalName || '目標') + 'まで</div>' +
+    '<div class="gt">目標 ' + tgt + ' kg' + (days != null ? '<span>' + (days > 0 ? 'あと ' + untilText(u.goalDate) : (days === 0 ? '今日です' : '期限を過ぎました')) + '</span>' : '') + '</div>' +
+    '<div class="gbar"><i style="width:' + pct + '%"></i></div><div class="gs">' + sub + '</div></div>';
+}
+function openGoal() {
+  if (!isMine()) return;
+  var u = user(S.me), cur = curKg(S.me), start = +u.startKg || cur, tgt = r1(start - (+u.goalKg || 0));
+  var old = $('#modal'); if (old) old.remove();
+  var h = '<div class="sheet"><h3>目標を変える</h3>' +
+    '<label class="f">目標の名前（例: 卒園式）</label><input id="g_name" value="' + esc(u.goalName || '') + '" maxlength="30">' +
+    '<div class="grid2"><div><label class="f">目標体重(kg)</label><input id="g_tgt" type="number" step="0.1" inputmode="decimal" value="' + (tgt || '') + '"></div>' +
+    '<div><label class="f">目標の日</label><input id="g_date" type="date" value="' + esc(u.goalDate || '') + '"></div></div>' +
+    '<label class="f">開始時の体重(kg)　※スタート時点の体重</label><input id="g_start" type="number" step="0.1" inputmode="decimal" value="' + start + '">' +
+    '<div class="sub" style="margin-top:8px">現在の体重は ' + cur + ' kg です。</div>' +
+    '<div style="height:18px"></div><button class="primary" id="g_save">保存する</button><div style="height:4px"></div><button class="link" id="g_cancel" style="width:100%">閉じる</button></div>';
+  var div = document.createElement('div'); div.className = 'modal'; div.id = 'modal'; div.innerHTML = h;
+  document.body.appendChild(div);
+  addX(div, function () { div.remove(); });
+  $('#g_cancel').onclick = function () { div.remove(); };
+  $('#g_save').onclick = function () {
+    var t = parseFloat($('#g_tgt').value), s = parseFloat($('#g_start').value);
+    if (!(t > 0) || !(s > 0)) return toast('体重を入れてください');
+    if (s - t <= 0) return toast('目標体重は、開始時の体重より小さくしてください');
+    var d = {}; Object.keys(u).forEach(function (k) { d[k] = u[k]; });
+    d.goalName = $('#g_name').value; d.goalDate = $('#g_date').value; d.goalKg = r1(s - t); d.startKg = s;
+    var btn = this; btn.disabled = true;
+    api('api_saveUser', d).then(function (rec) {
+      for (var i = 0; i < S.users.length; i++) if (S.users[i].id === rec.id) S.users[i] = rec;
+      dirty(); div.remove(); show(); toast('目標を保存しました');
+    }).catch(function (e) { toast(e.message); btn.disabled = false; });
+  };
+}
+/* ---------- 起動 ---------- */
+function boot() {
+  $('#app').innerHTML = SPLASH;
+  api('api_boot').then(function (r) {
+    S.users = r.users; S.today = r.today; S.date = S.date || r.today; S.wl = r.weights || {};
+    if (!S.users.length) { S.creating = true; S.tab = 'settings'; S.me = ''; show(); return; }
+    S.me = S.users[0].id; S.viewId = S.me;
+    var me = user(S.me), p = Promise.resolve();
+    if (!(+me.goalKg > 0) && !me.goalName && !me.goalDate) {
+      var d = {}; Object.keys(me).forEach(function (k) { d[k] = me[k]; });
+      d.goalName = '卒園式'; d.goalDate = '2027-03-31'; d.goalKg = 8; d.startKg = curKg(S.me); d.startDate = S.today;
+      p = api('api_saveUser', d).then(function (rec) { S.users[0] = rec; });
+    }
+    if (me.goalName === '卒園式' && +me.goalKg === 8 && +me.startKg === 70) {
+      var d2 = {}; Object.keys(me).forEach(function (k) { d2[k] = me[k]; });
+      d2.goalKg = 10;
+      p = p.then(function () { return api('api_saveUser', d2); }).then(function (rec) { S.users[0] = rec; });
+    }
+    return p.then(show);
+  }).catch(function (e) {
+    $('#app').innerHTML = '<div class="gate"><p>' + esc(e.message) + '</p><button class="ghost" onclick="boot()">再読み込み</button></div>';
+  });
+}
+/* ---------- 画面骨格 ---------- */
+function user(id) { return S.users.filter(function (u) { return u.id === id; })[0] || {}; }
+function show() {
+  var h = '<header>' + (S.creating ? '<div class="brand"><i></i>パシャカロ</div>' : goalHeader()) + '<div class="chips">';
+  if (!S.creating && S.users.length > 1) S.users.forEach(function (u) {
+    h += '<button class="chip' + (u.id === S.viewId ? ' on' : '') + '" data-v="' + esc(u.id) + '">' + esc(u.name) + (u.id === S.me ? '（自分）' : '') + '</button>';
+  });
+  h += '</div></header><main id="main"></main>';
+  if (!S.creating) {
+    h += '<nav>' + [['day', '記録'], ['ana', '分析']].map(function (t) {
+      return '<button data-t="' + t[0] + '" class="' + (S.tab === t[0] ? 'on' : '') + '">' + ICON[t[0]] + t[1] + '</button>';
+    }).join('') + '</nav>';
+  }
+  $('#app').innerHTML = h;
+  document.querySelectorAll('[data-v]').forEach(function (b) { b.onclick = function () { S.viewId = b.dataset.v; show(); }; });
+  document.querySelectorAll('[data-goal]').forEach(function (b) { b.onclick = openGoal; });
+  document.querySelectorAll('[data-goto]').forEach(function (b) { b.onclick = function () { S.tab = b.dataset.goto; show(); }; });
+  document.querySelectorAll('[data-t]').forEach(function (b) { b.onclick = function () { S.tab = b.dataset.t; show(); }; });
+  ({ day: viewDay, ana: viewAna, settings: viewSettings })[S.tab]();
+}
+function isMine() { return S.viewId === S.me; }
+
+/* ---------- 記録（1日） ---------- */
+function sum(ms) {
+  return ms.reduce(function (a, m) { a.kcal += +m.kcal || 0; a.p += +m.p || 0; a.f += +m.f || 0; a.c += +m.c || 0; return a; }, { kcal: 0, p: 0, f: 0, c: 0 });
+}
+function ring(pct, over) {
+  var R = 86, C = 2 * Math.PI * R, col = over ? '#c0392b' : 'url(#rg)';
+  return '<svg viewBox="0 0 196 196" width="196" height="196"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F7B27A"/><stop offset="1" stop-color="#E8691A"/></linearGradient></defs>' +
+    '<circle cx="98" cy="98" r="' + R + '" fill="none" stroke="#f3efe9" stroke-width="10"/>' +
+    '<circle class="rarc" cx="98" cy="98" r="' + R + '" fill="none" stroke="' + col + '" stroke-width="10" stroke-linecap="round" stroke-dasharray="' + (C * Math.min(1, pct)) + ' ' + C + '"/></svg>';
+}
+function strip(thumbs) {
+  return thumbs && thumbs.length ? '<div class="strip">' + thumbs.map(function (t) { return '<img src="' + esc(t) + '">'; }).join('') + '</div>' : '';
+}
+function viewDay() {
+  var key = 'd|' + S.viewId + '|' + S.date;
+  swr(key, function () { return api('api_day', S.viewId, S.date); }, renderDay, function () { return S.tab === 'day' && key === 'd|' + S.viewId + '|' + S.date; });
+}
+function renderDay(r) {
+  var u = user(S.viewId), main = $('#main');
+  S.meals = r.meals.slice().sort(function (a, b) { return a.time < b.time ? -1 : 1; });
+  S.exs = r.exs.slice().sort(function (a, b) { return a.time < b.time ? -1 : 1; });
+  var t = sum(S.meals), burn = S.exs.reduce(function (a, x) { return a + (+x.kcal || 0); }, 0);
+  var goal = +u.kcal || 0, net = t.kcal - burn, left = goal - net;
+    var h = '<div class="datebar"><button id="prev">‹</button><b>' + dlabel(S.date) + (S.date === S.today ? ' ・今日' : '') + '</b><button id="next">›</button></div>';
+    h += '<div class="card hero">' + (isMine() ? '<img class="me" src="' + ABE + '" alt="">' + deco('tanaka', 'me2') : '') + '<div class="sub" style="letter-spacing:.14em">' + esc(u.name) + 'さんのトータルカロリー</div>' +
+      '<div class="ringwrap" style="margin-top:14px">' + ring(goal ? net / goal : 0, left < 0) + '<div class="ringin"><span class="big">' + Math.round(net) + '</span><span class="sub">トータル kcal</span></div></div>';
+    h += '<div class="eq"><div><small>摂取</small><b>' + Math.round(t.kcal) + '</b></div><i>−</i><div><small>消費（運動）</small><b>' + Math.round(burn) + '</b></div></div>';
+    if (goal) {
+      h += '<div class="rest' + (left < 0 ? ' over' : '') + '"><small>目標 ' + goal + ' kcal まで</small>' +
+        (left >= 0 ? '<div class="rv">残り <b>' + Math.round(left) + '</b> kcal' + (t.kcal > 0 ? deco('happy', 'mood') : '') + '</div>' : '<div class="rv">目標を <b>' + Math.round(-left) + '</b> kcal オーバー' + deco('wow', 'mood') + '</div>') + '</div>';
+    } else h += '<div style="margin-top:14px"><span class="sub">設定から目標を入れてください</span></div>';
+    h += '<div class="pfc">' + [['たんぱく質', t.p, u.p, '#E8691A'], ['脂質', t.f, u.f, '#1f1d1b'], ['炭水化物', t.c, u.c, '#c9c0b4']].map(function (x) {
+      return '<div><div class="sub">' + x[0] + '</div><b>' + Math.round(x[1]) + '</b><span class="sub"> / ' + (x[2] || '-') + 'g</span><div class="bar"><i style="width:' + (x[2] ? Math.min(100, x[1] / x[2] * 100) : 0) + '%;background:' + x[3] + '"></i></div></div>';
+    }).join('') + '</div></div>';
+    h += '<div class="card"><h2>MEALS</h2>';
+    if (!S.meals.length) h += '<div class="empty">' + deco('bear', 'x') + '<div class="sub">まだ記録がありません</div></div>';
+    S.meals.forEach(function (m) {
+      h += '<div class="meal" data-m="' + esc(m.id) + '"><div class="mh"><div class="t"><b>' + esc(m.name) + '</b><span class="sub"><span class="tag t-' + esc(m.type) + '">' + esc(m.type) + '</span>' + esc(m.time) + '　P' + Math.round(m.p) + ' F' + Math.round(m.f) + ' C' + Math.round(m.c) + '</span></div>' +
+        '<div class="k">' + Math.round(m.kcal) + '<small>kcal</small></div></div>' + strip(m.thumbs) + '</div>';
+    });
+    h += '</div><div class="card">' + deco(S.exs.length ? 'happy' : 'walk') + '<h2>EXERCISE' + (burn ? '　<span style="letter-spacing:.04em;color:var(--ink)">−' + Math.round(burn) + ' kcal</span>' : '') + '</h2>';
+    if (!S.exs.length) h += '<div class="sub" style="padding:6px 0 4px">まだ記録がありません</div>';
+    S.exs.forEach(function (x) {
+      h += '<div class="exrow" data-x="' + esc(x.id) + '"><div><b>' + esc(x.type) + '</b><div class="sub">' + esc(x.time) + '　' + exSub(x) + '</div></div><div class="k">−' + Math.round(x.kcal) + '<small>kcal</small></div></div>';
+    });
+    h += '</div>';
+    var wl = wlOf(S.viewId), wr = wl.filter(function (w) { return w.date === S.date; })[0], wp = wl.filter(function (w) { return w.date < S.date; }).slice(-1)[0];
+    h += '<div class="card" id="wcard"><h2>WEIGHT</h2>' + (wr ? '<div class="exrow" style="border:0;padding:2px 0 0"><div><b>体重</b><div class="sub">' + (wp ? '前回 ' + r1(wp.kg) + ' kg（' + dlabel(wp.date).split('（')[0] + '）' : '初めての記録') + '</div></div><div class="k">' + r1(wr.kg) + '<small>kg</small>' + (wp ? '<span class="wd' + (wr.kg - wp.kg > 0 ? ' up' : '') + '">' + (wr.kg - wp.kg > 0 ? '+' : '') + r1(wr.kg - wp.kg) + '</span>' : '') + '</div></div>' : '<div class="sub" style="padding:6px 0 4px">まだ記録がありません</div>') + '</div>';
+    if (isMine()) h += '<div class="fab"><button id="add">＋ 食事</button><button id="addEx" class="ink">＋ 運動</button><button id="addW" class="ghostfab">＋ 体重</button></div>';
+    main.innerHTML = h;
+    $('#prev').onclick = function () { S.date = addDays(S.date, -1); viewDay(); };
+    $('#next').onclick = function () { S.date = addDays(S.date, 1); viewDay(); };
+    if ($('#add')) $('#add').onclick = function () { openMeal(null); };
+    if ($('#addEx')) $('#addEx').onclick = function () { openEx(null); };
+    if ($('#addW')) $('#addW').onclick = function () { openWt(S.date); };
+    if ($('#wcard') && isMine()) $('#wcard').onclick = function () { openWt(S.date); };
+    document.querySelectorAll('[data-m]').forEach(function (el) {
+      el.onclick = function () {
+        var m = S.meals.filter(function (x) { return x.id === el.dataset.m; })[0];
+        if (isMine()) openMeal(m); else toast('他の人の記録は見るだけです');
+      };
+    });
+    document.querySelectorAll('[data-x]').forEach(function (el) {
+      el.onclick = function () {
+        var x = S.exs.filter(function (y) { return y.id === el.dataset.x; })[0];
+        if (isMine()) openEx(x); else toast('他の人の記録は見るだけです');
+      };
+    });
+}
+/* ---------- 運動の追加・編集 ---------- */
+var X = null;
+var EX = [['バイク', [3.5, 5.5, 8]], ['ステップ', [3, 4.5, 6.5]], ['ウォーキング', [2.8, 3.8, 5]], ['筋トレ', [3, 4, 6]], ['ジョギング', [6, 8.3, 10]], ['その他', [3, 5, 7]]];
+var LV = ['弱', '中', '強'], LVD = ['ゆるく', 'ふつう', 'きつめ'];
+function strideM() { return ((+user(S.me).height || 158) * 0.45) / 100; }
+function stepsKm(n) { return (+n || 0) * strideM() / 1000; }
+function stepsMin(n) { return Math.max(1, Math.round(stepsKm(n) / 4.5 * 60)); }
+function exNote() { return X.mode === 'steps' ? ('歩数' + (+X.steps || 0) + '歩' + (X.note.trim() ? '／' + X.note.trim() : '')) : X.note; }
+function exLevel() { return X.mode === 'steps' ? '歩数' : LV[X.level]; }
+function exSub(x) {
+  var m = x.level === '歩数' ? /^歩数(\d+)歩/.exec(x.note || '') : null;
+  if (m) return (+m[1]).toLocaleString() + '歩・' + hmText(x.minutes);
+  return x.minutes + '分' + (x.level ? '・' + esc(x.level) : '');
+}
+function exKcal() {
+  if (X.mode === 'steps') return Math.max(0, Math.round(0.65 * curKg(S.me) * stepsKm(X.steps)));
+  var e = EX.filter(function (x) { return x[0] === X.type; })[0] || EX[0];
+  return Math.max(0, Math.round((e[1][X.level] - 1) * curKg(S.me) * ((+X.minutes || 0) / 60) * 1.05));
+}
+function openEx(x) {
+  var now = new Date();
+  if (x) {
+    var sm = (x.level === '歩数') ? /^歩数(\d+)歩(?:／(.*))?$/.exec(x.note || '') : null;
+    X = { id: x.id, type: x.type, minutes: +x.minutes, level: Math.max(0, LV.indexOf(x.level)), kcal: +x.kcal, keep: false, date: x.date, time: x.time, note: sm ? (sm[2] || '') : (x.note || ''), createdAt: x.createdAt, mode: sm ? 'steps' : 'time', steps: sm ? +sm[1] : 0 };
+    X.aiDone = X.note.trim();
+  }
+  else { X = { mode: 'time', steps: 0, id: '', type: 'バイク', minutes: 30, level: 1, kcal: 0, keep: false, date: S.date, time: pad(now.getHours()) + ':' + pad(now.getMinutes()), note: '' }; X.kcal = exKcal(); }
+  renderEx();
+}
+function closeEx(force) {
+  if (X && X.id && X.changed && !force && !confirm('変更を保存せずに閉じますか？')) return;
+  var m = $('#modal'); if (m) m.remove(); X = null;
+}
+function autoEx() { if (X && X.id) X.changed = true; }
+function finishEx(btn) {
+  var e = X;
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span>保存中…';
+  var pre = (e.note.trim() && e.aiDone !== e.note.trim() && !e.touched) ? exAI(btn).catch(function () {}) : Promise.resolve();
+  pre.then(function () { btn.disabled = true; btn.innerHTML = '<span class="spin"></span>保存中…'; return api('api_saveExercise', { id: e.id, userId: S.me, date: e.date, time: e.time, type: e.type, minutes: e.minutes, level: exLevel(), kcal: e.kcal, note: exNote(), createdAt: e.createdAt }); })
+    .then(function () { dirty(); closeEx(true); S.date = e.date; S.tab = 'day'; show(); toast('保存しました'); })
+    .catch(function (er) { toast(er.message); btn.disabled = false; btn.textContent = '保存する'; });
+}
+function exAI(btn) {
+  var note = X.note.trim();
+  if (!note) { toast('AIメモを入れてください'); return Promise.reject(); }
+  if (X.mode === 'steps') note = 'ヘルスケアの歩数 ' + (+X.steps || 0) + '歩（約' + r1(stepsKm(X.steps)) + 'km）。' + note;
+  var old = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<span class="spin" style="border-color:#8a847d;border-top-color:transparent"></span>計算中…';
+  return api('api_estimateExercise', { type: X.type, minutes: X.minutes, level: exLevel(), weightKg: curKg(S.me), kcal: X.kcal, note: note }).then(function (r) {
+    X.aiDone = X.note.trim(); X.touched = false; X.keep = true;
+    if (r.minutes > 0 && X.mode !== 'steps') { X.minutes = Math.round(r.minutes); xmUpdate(); }
+    X.kcal = Math.max(0, Math.round(r.kcal));
+    if ($('#x_kcal')) $('#x_kcal').value = X.kcal;
+    var res = $('#x_aires'); if (res) res.textContent = '✓ ' + (r.summary || '');
+    autoEx();
+    btn.disabled = false; btn.innerHTML = old;
+  }).catch(function (e) { btn.disabled = false; btn.innerHTML = old; if (e) toast(e.message); throw e; });
+}
+function stepsUI() {
+  return '<label class="f">歩数（iPhoneのヘルスケアの数字）</label><div class="share"><div class="sv"><input id="x_steps" type="number" inputmode="numeric" value="' + (X.steps || '') + '" placeholder="0" style="width:128px;font-size:38px;font-weight:200;border:0;padding:0;background:transparent;color:var(--accent)"><span>歩</span><small id="xsh">' + stepsInfo() + '</small></div>' +
+    '<div class="chips wrap">' + [3000, 5000, 8000, 10000, 15000, 20000].map(function (n) { return '<button class="chip sm' + (+X.steps === n ? ' on' : '') + '" data-st="' + n + '">' + n.toLocaleString() + '</button>'; }).join('') + '</div>' +
+    '<div class="sub" style="margin-top:8px;line-height:1.6">ヘルスケア → 歩数 の合計を入れてください。身長から歩幅を出して、距離と消費を計算します。</div></div>';
+}
+function stepsInfo() { return X.steps > 0 ? '約 ' + r1(stepsKm(X.steps)) + ' km・約 ' + hmText(stepsMin(X.steps)) : ''; }
+function stepsApply() {
+  X.minutes = stepsMin(X.steps);
+  if (!X.keep) X.kcal = exKcal();
+  if ($('#xsh')) $('#xsh').textContent = stepsInfo();
+  if ($('#x_kcal') && !X.keep) $('#x_kcal').value = X.kcal;
+}
+function renderEx() {
+  var old = $('#modal'); if (old) old.remove();
+  var h = '<div class="sheet"><h3>' + (X.id ? '運動を編集' : '運動を記録') + '</h3>' +
+    '<label class="f">種類</label><div class="chips wrap">' + EX.map(function (e) { return '<button class="chip' + (e[0] === X.type ? ' on' : '') + '" data-et="' + e[0] + '">' + e[0] + '</button>'; }).join('') + '</div>' +
+    (X.type === 'ウォーキング' ? '<label class="f">入力のしかた</label><div class="chips"><button class="chip' + (X.mode !== 'steps' ? ' on' : '') + '" data-mode="time">時間で入力</button><button class="chip' + (X.mode === 'steps' ? ' on' : '') + '" data-mode="steps">歩数で入力（ヘルスケア）</button></div>' : '') +
+    (X.mode === 'steps' && X.type === 'ウォーキング' ? stepsUI() : '<label class="f">時間</label><div class="share"><div class="sv"><b id="xmv">' + Math.round(X.minutes) + '</b><span>分</span><small id="xmh">' + (X.minutes >= 60 ? '＝ ' + hmText(X.minutes) : '') + '</small></div>' +
+    '<input type="range" id="x_min" min="5" max="180" step="5" value="' + Math.max(5, Math.min(180, X.minutes)) + '" style="--p:' + ((Math.max(5, Math.min(180, X.minutes)) - 5) / 175 * 100) + '%">' +
+    '<div class="chips wrap" style="margin-top:8px">' + [10, 20, 30, 45, 60, 90, 120, 180].map(function (m) { return '<button class="chip sm' + (+X.minutes === m ? ' on' : '') + '" data-em="' + m + '">' + (m >= 60 ? hmText(m) : m + '分') + '</button>'; }).join('') + '</div></div>' +
+    '<label class="f">強さ</label><div class="chips">' + LV.map(function (l, i) { return '<button class="chip' + (i === X.level ? ' on' : '') + '" data-el="' + i + '">' + l + '（' + LVD[i] + '）</button>'; }).join('') + '</div>') +
+    '<div class="card" style="margin-top:18px;text-align:center"><div class="sub">消費カロリー</div><div><input id="x_kcal" type="number" inputmode="numeric" value="' + X.kcal + '" style="width:150px;text-align:center;font-size:34px;font-weight:200;border:0;padding:6px 0;background:transparent"> <span class="sub">kcal</span></div>' +
+    '<div class="sub" style="line-height:1.7;margin-top:2px">体重 ' + curKg(S.me) + ' kg から計算した目安です（安静時の分は引いています）。' + (X.type === 'その他' ? '「その他」は中くらいの強さで計算します。' : '') + '数字は直接直せます。</div></div>' +
+    '<div class="grid2"><div><label class="f">日付</label><input type="date" id="x_date" value="' + esc(X.date) + '"></div><div><label class="f">時刻</label><input type="time" id="x_time" value="' + esc(X.time) + '"></div></div>' +
+    '<label class="f">AIメモ（入力した内容を優先して計算します）</label><input id="x_note" value="' + esc(X.note) + '" placeholder="例: 負荷8、腹筋・スクワット、消費250kcal">' +
+    '<button class="ghost" id="x_ai" style="margin-top:8px">AIメモで計算する</button><div id="x_aires" class="sub" style="margin-top:6px;line-height:1.6"></div>' +
+    '<div style="height:18px"></div><button class="primary" id="x_save">' + '保存する' + '</button><div style="height:8px"></div>' +
+    '<div class="grid2"><button class="ghost" id="x_cancel">閉じる</button>' + (X.id ? '<button class="ghost danger" id="x_del">削除</button>' : '<span></span>') + '</div></div>';
+  var div = document.createElement('div'); div.className = 'modal'; div.id = 'modal'; div.innerHTML = h;
+  document.body.appendChild(div);
+  addX(div, function () { closeEx(); });
+  var auto = function () { if (!X.keep) { X.kcal = exKcal(); $('#x_kcal').value = X.kcal; } };
+  document.querySelectorAll('#modal [data-et]').forEach(function (b) { b.onclick = function () { X.type = b.dataset.et; if (X.type !== 'ウォーキング') X.mode = 'time'; if (!X.keep) X.kcal = exKcal(); autoEx(); renderEx(); }; });
+  document.querySelectorAll('#modal [data-em]').forEach(function (b) { b.onclick = function () { X.minutes = +b.dataset.em; if (!X.keep) X.kcal = exKcal(); autoEx(); renderEx(); }; });
+  document.querySelectorAll('#modal [data-el]').forEach(function (b) { b.onclick = function () { X.level = +b.dataset.el; if (!X.keep) X.kcal = exKcal(); autoEx(); renderEx(); }; });
+  if ($('#x_min')) $('#x_min').oninput = function () { X.minutes = +this.value || 0; xmUpdate(); auto(); autoEx(); };
+  document.querySelectorAll('#modal [data-mode]').forEach(function (b) { b.onclick = function () {
+    X.mode = b.dataset.mode; if (X.mode === 'steps' && X.steps > 0) X.minutes = stepsMin(X.steps);
+    if (!X.keep) X.kcal = exKcal();
+    autoEx(); renderEx();
+  }; });
+  if ($('#x_steps')) $('#x_steps').oninput = function () { X.steps = Math.max(0, Math.round(+this.value || 0)); stepsApply(); autoEx(); };
+  document.querySelectorAll('#modal [data-st]').forEach(function (b) { b.onclick = function () { X.steps = +b.dataset.st; stepsApply(); autoEx(); renderEx(); }; });
+  $('#x_kcal').oninput = function () { X.kcal = +this.value || 0; X.keep = true; autoEx(); };
+  $('#x_date').onchange = function () { X.date = this.value; autoEx(); };
+  $('#x_time').onchange = function () { X.time = this.value; autoEx(); };
+  $('#x_note').oninput = function () { X.note = this.value; autoEx(); };
+  $('#x_kcal').addEventListener('input', function () { X.touched = true; });
+  $('#x_ai').onclick = function () { exAI(this).catch(function () {}); };
+  $('#x_cancel').onclick = function () { closeEx(); };
+  $('#x_save').onclick = X.id ? function () { finishEx(this); } : function () {
+    if (X.mode === 'steps' ? !(X.steps > 0) : !(X.minutes > 0)) return toast(X.mode === 'steps' ? '歩数を入れてください' : '時間（分）を入れてください');
+    var btn = this; btn.disabled = true; btn.innerHTML = '<span class="spin"></span>保存中…';
+    var pre = (X.note.trim() && X.aiDone !== X.note.trim() && !X.touched) ? exAI(btn) : Promise.resolve();
+    pre.catch(function () {}).then(function () { return api('api_saveExercise', { id: X.id, userId: S.me, date: X.date, time: X.time, type: X.type, minutes: X.minutes, level: exLevel(), kcal: X.kcal, note: exNote(), createdAt: X.createdAt }); })
+      .then(function () { dirty(); S.date = X.date; closeEx(true); S.tab = 'day'; show(); toast('保存しました'); })
+      .catch(function (e) { toast(e.message); btn.disabled = false; btn.textContent = '保存する'; });
+  };
+  if ($('#x_del')) $('#x_del').onclick = function () {
+    if (!confirm('この運動を削除しますか？')) return;
+    api('api_deleteExercise', X.id).then(function () { dirty(); closeEx(true); viewDay(); toast('削除しました'); }).catch(function (e) { toast(e.message); });
+  };
+}
+
+/* ---------- 食事の追加・編集 ---------- */
+var E = null;
+var SHARES = [[100, '全部'], [75, '4分の3'], [67, '3分の2'], [50, '2分の1'], [33, '3分の1'], [25, '4分の1'], [17, '6分の1']];
+function shareJp(p) {
+  var m = SHARES.filter(function (x) { return x[0] === p; })[0]; if (m) return m[1];
+  var a = p, b = 100; while (b) { var t = a % b; a = b; b = t; }
+  return (100 / a) + '分の' + (p / a);
+}
+function hmText(m) { m = Math.round(m); return m < 60 ? m + '分' : Math.floor(m / 60) + '時間' + (m % 60 ? (m % 60) + '分' : ''); }
+function xmUpdate() {
+  var v = Math.max(5, Math.min(180, +X.minutes || 5)), r = $('#x_min');
+  if (r) { r.value = v; r.style.setProperty('--p', ((v - 5) / 175 * 100) + '%'); }
+  if ($('#xmv')) $('#xmv').textContent = Math.round(X.minutes || 0);
+  document.querySelectorAll('#modal [data-em]').forEach(function (c) { c.classList.toggle('on', +c.dataset.em === +X.minutes); });
+  if ($('#xmh')) $('#xmh').textContent = X.minutes >= 60 ? '＝ ' + hmText(X.minutes) : '';
+}
+var TAGS = ['大盛り', '少なめ', '少し残した', 'おかわりした'];
+function shareUI() {
+  var v = +E.share || 100;
+  return '<div class="share"><div class="sv"><b id="shpct">' + v + '</b><span>%</span><small id="shjp">' + (v === 100 ? '全部食べた' : (shareJp(v) || '')) + '</small></div>' +
+    '<input type="range" id="shr" min="5" max="100" step="5" value="' + v + '" style="--p:' + v + '%">' +
+    '<div class="chips wrap" id="shares">' + SHARES.map(function (x) { return '<button class="chip sm' + (v === x[0] ? ' on' : '') + '" data-sh="' + x[0] + '">' + x[1] + '<i>' + x[0] + '%</i></button>'; }).join('') + '</div></div>';
+}
+function setShare(v) {
+  E.share = v >= 100 ? '' : String(v);
+  var r = $('#shr'); if (r) { r.value = v; r.style.setProperty('--p', v + '%'); }
+  $('#shpct').textContent = v; $('#shjp').textContent = v >= 100 ? '全部食べた' : (shareJp(v) || '');
+  document.querySelectorAll('#modal [data-sh]').forEach(function (x) { x.classList.toggle('on', +x.dataset.sh === v); });
+}
+function bindShare() {
+  $('#shr').oninput = function () { setShare(+this.value); };
+  document.querySelectorAll('#modal [data-sh]').forEach(function (b) { b.onclick = function () { setShare(+b.dataset.sh); }; });
+}
+function fullHint() {
+  var p = [];
+  if (+E.share && +E.share < 100) {
+    var pc = +E.share;
+    p.push('写真の料理は大皿などみんなで食べるものです。料理全体の量を推定し、そのうち自分が食べたのは全体の' + pc + '%（' + (shareJp(pc) || '') + '）だけです。品目ごとの数値は自分が食べた分（全体×' + pc + '%）にしてください。');
+  }
+  if (E.tags.length) p.push('食べ方: ' + E.tags.join('、'));
+  if (E.hint.trim()) p.push(E.hint.trim());
+  return p.join('\n');
+}
+function mealTypeNow() { var h = new Date().getHours(); return h < 10 ? '朝食' : h < 15 ? '昼食' : h < 21 ? '夕食' : '間食'; }
+function openMeal(m) {
+  var now = new Date();
+  if (m) {
+    var items = []; try { items = JSON.parse(m.items || '[]'); } catch (e) {}
+    E = { id: m.id, stage: 'edit', images: [], thumbs: (m.thumbs || []).slice(), tch: false, hint: '', share: '', tags: [], name: m.name, type: m.type, date: m.date, time: m.time, oldThumbs: m.thumbs || [], items: items, note: m.note, createdAt: m.createdAt, conf: '', notes: '' };
+    if (!items.length) E.items = [{ name: m.name, kcal: m.kcal, p: m.p, f: m.f, c: m.c }];
+  } else {
+    E = { id: '', stage: 'input', images: [], thumbs: [], tch: false, hint: '', share: '', tags: [], name: '', type: mealTypeNow(), date: S.date, time: pad(now.getHours()) + ':' + pad(now.getMinutes()), oldThumbs: [], items: [], note: '', conf: '', notes: '' };
+  }
+  renderMeal();
+}
+function addX(div, fn) {
+  var sh = div.querySelector('.sheet'), b = document.createElement('button');
+  b.className = 'xclose'; b.setAttribute('aria-label', '閉じる'); b.textContent = '×'; b.onclick = fn;
+  sh.insertBefore(b, sh.firstChild);
+}
+function closeMeal(force) {
+  if (E && E.id && E.changed && !force && !confirm('変更を保存せずに閉じますか？')) return;
+  var m = $('#modal'); if (m) m.remove(); E = null;
+}
+function autoSave() { if (E && E.id) E.changed = true; }
+function saveEdit(e) {
+  var t = sum(e.items);
+  if (!e.items.length || !t.kcal) { toast('カロリーを入力してください'); return Promise.resolve(false); }
+  var items = e.items.map(function (i) { return { name: i.name, amount_text: i.amount_text || '', kcal: +i.kcal || 0, p: +i.p || 0, f: +i.f || 0, c: +i.c || 0 }; });
+  return api('api_saveMeal', { id: e.id, userId: S.me, date: e.date, time: e.time, type: e.type, name: e.name || items[0].name || '食事', kcal: t.kcal, p: t.p, f: t.f, c: t.c, items: items, thumb: e.thumbs[0] || '', thumbs: e.tch ? e.thumbs : undefined, note: e.note, createdAt: e.createdAt })
+    .then(function () { return true; }).catch(function (er) { toast(er.message); return false; });
+}
+function finishMeal(btn) {
+  var e = E; btn.disabled = true; btn.innerHTML = '<span class="spin"></span>保存中…';
+  saveEdit(e).then(function (ok) {
+    if (!ok) { btn.disabled = false; btn.textContent = '保存する'; return; }
+    dirty(); closeMeal(true); S.date = e.date; S.tab = 'day'; show(); toast('保存しました');
+  });
+}
+function setSaveMark(t) { var m = $('#savemark'); if (m) m.textContent = t; }
+function curThumbs() { return E.images.length ? E.images.map(function (i) { return i.thumb; }) : E.oldThumbs; }
+function renderMeal() {
+  var old = $('#modal'); if (old) old.remove();
+  var h = '<div class="sheet">';
+  if (E.stage === 'input') {
+    h += '<h3>食事を追加</h3><div class="sub" style="line-height:1.7">食事や栄養成分表示の写真を選んでください（最大' + MAX_IMG + '枚）。写真なしで、文字だけでも計算できます。</div>';
+    if (E.images.length) {
+      h += '<div class="thumbs">' + E.images.map(function (im, i) { return '<div><img src="' + im.url + '"><b data-rm="' + i + '">×</b></div>'; }).join('') + '</div><div class="sub">' + E.images.length + ' / ' + MAX_IMG + ' 枚</div>';
+    }
+    if (E.images.length < MAX_IMG) h += '<div class="pick2" style="grid-template-columns:1fr"><button id="pick"><span>＋</span>写真を選ぶ・撮る<br><small class="sub">ライブラリから複数選択、またはその場で撮影</small></button></div>';
+    h += '<label class="f">取り分け（大皿・みんなで食べる料理の、自分の分）</label>' + shareUI() +
+      '<label class="f">食べ方</label><div class="chips wrap" id="tags">' + TAGS.map(function (t) { return '<button class="chip sm' + (E.tags.indexOf(t) >= 0 ? ' on' : '') + '" data-tg="' + t + '">' + t + '</button>'; }).join('') + '</div>' +
+      '<label class="f">AIメモ（入力した内容を優先して計算します）</label><textarea id="hint" rows="2" placeholder="例: ご飯は大盛り／半分残した／ケイチ屋の味噌ラーメン（お店とメニューを書くとネットで調べます）">' + esc(E.hint) + '</textarea>' +
+      '<div style="height:16px"></div><button class="primary" id="analyze">カロリーを計算する</button>' +
+      '<div style="height:4px"></div><button class="link" id="cancel" style="width:100%">閉じる</button>';
+  } else {
+    var t = sum(E.items), th = E.thumbs;
+    h += '<h3>' + (E.id ? '記録を編集' : '計算結果') + (E.conf ? ' <span class="badge">確度 ' + ({ high: '高', medium: '中', low: '低' }[E.conf] || '') + '</span>' : '') + '</h3>';
+    h += '<div class="thumbs">' + th.map(function (s, i) { return '<div><img src="' + esc(s) + '" style="width:58px;height:58px;border-radius:14px"><b data-rt="' + i + '">×</b></div>'; }).join('') + (th.length < MAX_IMG ? '<div class="add-ph" id="addph">＋</div>' : '') + '</div>';
+    if (E.notes) h += '<div class="note">' + esc(E.notes) + '</div>';
+    h += '<label class="f">名前</label><input id="name" value="' + esc(E.name) + '">' +
+      '<div class="grid2"><div><label class="f">日付</label><input type="date" id="date" value="' + esc(E.date) + '"></div><div><label class="f">時刻</label><input type="time" id="time" value="' + esc(E.time) + '"></div></div>' +
+      '<label class="f">区分</label><div class="chips" id="types">' + TYPES.map(function (x) { return '<button class="chip' + (x === E.type ? ' on' : '') + '" data-ty="' + x + '">' + x + '</button>'; }).join('') + '</div>' +
+      '<div class="card" style="margin-top:18px;text-align:center"><div class="sub">合計</div><span class="big" id="tk" style="font-size:46px">' + Math.round(t.kcal) + '</span> <span class="sub">kcal</span><div class="sub" id="tpfc" style="margin-top:4px">P' + r1(t.p) + '　F' + r1(t.f) + '　C' + r1(t.c) + '</div>' +
+      '<div class="scale"><button data-sc="0.5">×0.5</button><button data-sc="0.75">×0.75</button><button data-sc="1.25">×1.25</button><button data-sc="1.5">×1.5</button></div>' +
+      '<div class="sub">量が違うときは、全体をまとめて増減できます</div></div>' +
+      '<div class="aiedit"><label class="f" style="margin-top:0">AIに直してもらう</label><textarea id="aiins" rows="2" placeholder="例: 納豆は2パックではなく1パックだよ／ケイチ屋の味噌ラーメンを調べて計算して"></textarea><button class="ghost" id="aigo" style="margin-top:8px">この内容で修正する</button><div id="aires"></div></div><div id="items">';
+    E.items.forEach(function (it, i) {
+      h += '<div class="item"><div class="r"><input data-i="' + i + '" data-k="name" value="' + esc(it.name) + '"><button class="link danger" data-del="' + i + '">削除</button></div>' +
+        (it.amount_text ? '<div class="sub" style="margin:-2px 0 8px 4px">推定量　' + esc(it.amount_text) + '</div>' : '') +
+        '<div class="grid4">' + [['kcal', 'kcal'], ['p', 'P(g)'], ['f', 'F(g)'], ['c', 'C(g)']].map(function (k) {
+          return '<div><label>' + k[1] + '</label><input type="number" inputmode="decimal" data-i="' + i + '" data-k="' + k[0] + '" value="' + (it[k[0]] == null ? '' : it[k[0]]) + '"></div>';
+        }).join('') + '</div></div>';
+    });
+    h += '</div><button class="ghost" id="addItem">＋ 品目を追加</button><div style="height:16px"></div>' +
+      '<button class="primary" id="save">' + '保存する' + '</button><div style="height:8px"></div>' +
+      '<div class="grid2"><button class="ghost" id="redo">写真・補足からやり直す</button>' + (E.id ? '<button class="ghost danger" id="delete">この記録を削除</button>' : '<button class="ghost" id="cancel">閉じる</button>') + '</div>';
+  }
+  h += '</div>';
+  var div = document.createElement('div'); div.className = 'modal'; div.id = 'modal'; div.innerHTML = h;
+  document.body.appendChild(div);
+  addX(div, function () { closeMeal(); });
+  bindMeal();
+}
+function bindMeal() {
+  var q = function (s) { return $('#modal ' + s); };
+  if (E.stage === 'input') {
+    q('#hint').oninput = function () { E.hint = this.value; };
+    bindShare();
+    document.querySelectorAll('#modal [data-tg]').forEach(function (b) {
+      b.onclick = function () {
+        var i = E.tags.indexOf(b.dataset.tg); if (i >= 0) E.tags.splice(i, 1); else E.tags.push(b.dataset.tg);
+        b.classList.toggle('on', i < 0);
+      };
+    });
+    if (q('#pick')) q('#pick').onclick = function () { $('#file').click(); };
+    document.querySelectorAll('#modal [data-rm]').forEach(function (b) { b.onclick = function () { E.images.splice(+b.dataset.rm, 1); renderMeal(); }; });
+    q('#cancel').onclick = function () { closeMeal(); };
+    q('#analyze').onclick = analyze;
+    return;
+  }
+  var recalc = function () {
+    var t = sum(E.items); q('#tk').textContent = Math.round(t.kcal); q('#tpfc').textContent = 'P' + r1(t.p) + '　F' + r1(t.f) + '　C' + r1(t.c);
+  };
+  q('#name').oninput = function () { E.name = this.value; autoSave(); };
+  q('#date').onchange = function () { E.date = this.value; autoSave(); };
+  q('#time').onchange = function () { E.time = this.value; autoSave(); };
+  document.querySelectorAll('#modal [data-ty]').forEach(function (b) { b.onclick = function () { E.type = b.dataset.ty; autoSave(); document.querySelectorAll('#modal [data-ty]').forEach(function (x) { x.classList.toggle('on', x === b); }); }; });
+  q('#items').oninput = function (ev) {
+    var el = ev.target; if (el.dataset.i == null) return;
+    var it = E.items[+el.dataset.i], k = el.dataset.k;
+    it[k] = k === 'name' ? el.value : (el.value === '' ? '' : +el.value);
+    if (k !== 'name') recalc();
+    autoSave();
+  };
+  document.querySelectorAll('#modal [data-del]').forEach(function (b) { b.onclick = function () { E.items.splice(+b.dataset.del, 1); autoSave(); renderMeal(); }; });
+  document.querySelectorAll('#modal [data-sc]').forEach(function (b) {
+    b.onclick = function () {
+      var s = +b.dataset.sc;
+      E.items.forEach(function (it) { ['kcal', 'p', 'f', 'c'].forEach(function (k) { if (it[k] !== '' && it[k] != null) it[k] = k === 'kcal' ? Math.round(it[k] * s) : r1(it[k] * s); }); });
+      autoSave(); renderMeal();
+    };
+  });
+  document.querySelectorAll('#modal [data-rt]').forEach(function (b) { b.onclick = function () { E.thumbs.splice(+b.dataset.rt, 1); E.tch = true; autoSave(); renderMeal(); }; });
+  if (q('#addph')) q('#addph').onclick = function () { $('#file').click(); };
+  q('#aigo').onclick = function () {
+    var ins = q('#aiins').value.trim(); if (!ins) return toast('直したい内容を入れてください');
+    var btn = this; btn.disabled = true; btn.innerHTML = '<span class="spin" style="border-color:#8a847d;border-top-color:transparent"></span>調べて修正中…（最大1分ほど）';
+    api('api_editMeal', { name: E.name, instruction: ins, items: E.items.map(function (i) { return { name: i.name, amount_text: i.amount_text || '', kcal: +i.kcal || 0, p: +i.p || 0, f: +i.f || 0, c: +i.c || 0 }; }) }).then(function (r) {
+      if (r.items && r.items.length) {
+        E.items = r.items.map(function (x) { return { name: x.name, amount_text: x.amount_text, kcal: Math.round(x.kcal), p: r1(x.protein_g), f: r1(x.fat_g), c: r1(x.carbs_g) }; });
+        if (r.dish_name) E.name = r.dish_name;
+      }
+      E.notes = r.change_summary || '';
+      autoSave(); renderMeal();
+    }).catch(function (e) { btn.disabled = false; btn.textContent = 'この内容で修正する'; toast(e.message); });
+  };
+  q('#addItem').onclick = function () { E.items.push({ name: '', kcal: '', p: '', f: '', c: '' }); renderMeal(); };
+  q('#save').onclick = E.id ? function () { finishMeal(this); } : saveMeal;
+  q('#redo').onclick = function () { E.stage = 'input'; renderMeal(); };
+  if (q('#cancel')) q('#cancel').onclick = function () { closeMeal(); };
+  if (q('#delete')) q('#delete').onclick = function () {
+    if (!confirm('この記録を削除しますか？')) return;
+    api('api_deleteMeal', E.id).then(function () { dirty(); closeMeal(true); viewDay(); toast('削除しました'); }).catch(function (e) { toast(e.message); });
+  };
+}
+function analyze() {
+  var btn = $('#analyze');
+  var hint = fullHint();
+  if (!E.images.length && !hint.trim()) return toast('写真か補足を入れてください');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span>計算中…（' + (E.images.length > 4 ? '30秒ほど' : '10〜20秒。お店を調べる場合は1分ほど') + '）';
+  api('api_analyze', { images: E.images.map(function (i) { return { data: i.data, mime: 'image/jpeg' }; }), hint: hint }).then(function (r) {
+    E.items = (r.items || []).map(function (x) {
+      return { name: x.name, amount_text: x.amount_text, kcal: Math.round(x.kcal), p: r1(x.protein_g), f: r1(x.fat_g), c: r1(x.carbs_g) };
+    });
+    E.name = r.dish_name || ''; E.conf = r.confidence; E.notes = r.notes || '';
+    if (+E.share && +E.share < 100) E.note = '取り分け ' + E.share + '%';
+    if (E.images.length) { E.thumbs = E.images.map(function (i) { return i.thumb; }); E.tch = true; }
+    if (!E.items.length) toast('食べ物を読み取れませんでした。補足を足してお試しください');
+    E.stage = 'edit'; autoSave(); renderMeal();
+  }).catch(function (e) {
+    btn.disabled = false; btn.textContent = 'カロリーを計算する';
+    var d = $('#aierr'); if (!d) { d = document.createElement('div'); d.id = 'aierr'; d.className = 'note'; d.style.color = '#c0392b'; btn.parentNode.insertBefore(d, btn); }
+    d.textContent = 'エラー: ' + e.message;
+  });
+}
+function saveMeal() {
+  var t = sum(E.items);
+  if (!E.items.length || !t.kcal) return toast('カロリーを入力してください');
+  var btn = $('#save'); btn.disabled = true; btn.innerHTML = '<span class="spin"></span>保存中…';
+  var items = E.items.map(function (i) { return { name: i.name, amount_text: i.amount_text || '', kcal: +i.kcal || 0, p: +i.p || 0, f: +i.f || 0, c: +i.c || 0 }; });
+  var th = E.thumbs;
+  api('api_saveMeal', {
+    id: E.id, userId: S.me, date: E.date, time: E.time, type: E.type, name: E.name || items[0].name || '食事',
+    kcal: t.kcal, p: t.p, f: t.f, c: t.c, items: items, thumb: th[0] || '', thumbs: E.tch ? th : undefined, note: E.note, createdAt: E.createdAt
+  }).then(function () { dirty(); S.date = E.date; closeMeal(true); S.tab = 'day'; show(); toast('保存しました'); })
+    .catch(function (e) { toast(e.message); btn.disabled = false; btn.textContent = '保存する'; });
+}
+
+/* 写真の選択と縮小（複数・最大10枚） */
+function loadFiles(files) {
+  if (!E) return;
+  var edit = E.stage === 'edit';
+  var list = Array.prototype.slice.call(files), room = MAX_IMG - (edit ? E.thumbs.length : E.images.length);
+  if (list.length > room) { toast('写真は' + MAX_IMG + '枚までです。先頭の' + room + '枚を追加します'); list = list.slice(0, room); }
+  if (!list.length) return;
+  var big = (E.images.length + list.length) <= 4, mx = big ? 1280 : 1024, q = big ? 0.8 : 0.75;
+  var mine = E;
+  toast('写真を読み込み中…');
+  list.reduce(function (p, f) {
+    return p.then(function () {
+      return new Promise(function (res) {
+        var u = URL.createObjectURL(f), im = new Image();
+        im.onload = function () {
+          try {
+          if (edit) { mine.thumbs.push(toJpeg(im, 160, 0.6)); mine.tch = true; if (mine === E) autoSave(); }
+          else {
+            var full = toJpeg(im, mx, q), th = toJpeg(im, 160, 0.6);
+            mine.images.push({ url: full, data: full.split(',')[1], thumb: th });
+          }
+          } catch (err) { toast('写真の処理に失敗しました: ' + err.message); }
+          URL.revokeObjectURL(u);
+          res();
+        };
+        im.onerror = function () { toast('この写真は読み込めませんでした（形式: ' + (f.type || '不明') + '）'); res(); };
+        im.src = u;
+      });
+    });
+  }, Promise.resolve()).then(function () { if (E === mine) { $('#toast').className = ''; renderMeal(); } });
+}
+$('#file').onchange = function () { var f = this.files; loadFiles(f); this.value = ''; };
+function toJpeg(im, max, q) {
+  var r = Math.min(1, max / Math.max(im.naturalWidth, im.naturalHeight));
+  var c = document.createElement('canvas'); c.width = Math.round(im.naturalWidth * r); c.height = Math.round(im.naturalHeight * r);
+  c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+  return c.toDataURL('image/jpeg', q);
+}
+
+/* ---------- 履歴 ---------- */
+function viewAna() {
+  var key = 'a|' + S.viewId + '|' + S.range;
+  swr(key, function () {
+    return Promise.all([api('api_range', S.viewId, addDays(S.today, -(S.range - 1)), S.today), api('api_listWeights', S.viewId)]).then(function (x) { return { r: x[0], ws: x[1] }; });
+  }, renderAna, function () { return S.tab === 'ana' && key === 'a|' + S.viewId + '|' + S.range; });
+}
+function renderAna(d) {
+  var r = d.r, ws = d.ws || [], u = user(S.viewId), main = $('#main'), from = addDays(S.today, -(S.range - 1));
+  S.wl[S.viewId] = ws;
+  var by = {}, ex = {}, wd = {};
+  r.meals.forEach(function (m) { by[m.date] = (by[m.date] || 0) + (+m.kcal || 0); });
+  r.exs.forEach(function (x) { ex[x.date] = (ex[x.date] || 0) + (+x.kcal || 0); });
+  ws.forEach(function (w) { wd[w.date] = w.kg; });
+  var days = []; for (var i = 0; i < S.range; i++) { var dd = addDays(from, i); days.push({ d: dd, v: Math.round(by[dd] || 0), e: Math.round(ex[dd] || 0), w: wd[dd] }); }
+  var rec = days.filter(function (x) { return x.v > 0; }), avg = rec.length ? Math.round(rec.reduce(function (a, x) { return a + x.v; }, 0) / rec.length) : 0;
+  var net = rec.length ? Math.round(rec.reduce(function (a, x) { return a + x.v - x.e; }, 0) / rec.length) : 0;
+  var exd = days.filter(function (x) { return x.e > 0; }).length;
+  var goal = +u.kcal || 0;
+  var h = '<div class="chips" style="margin:14px 0 0">' + [7, 14, 30].map(function (n) { return '<button class="chip' + (S.range === n ? ' on' : '') + '" data-r="' + n + '">' + n + '日</button>'; }).join('') + '</div>';
+  /* 体重 */
+  var inR = ws.filter(function (w) { return w.date >= from; }), show = inR.length >= 2 ? inR : ws;
+  if (ws.length) {
+    var last = ws[ws.length - 1], first = show[0], tgt = (+u.goalKg > 0) ? r1((+u.startKg || last.kg) - u.goalKg) : null;
+    var chg = r1(last.kg - first.kg);
+    h += '<div class="card"><h2>WEIGHT</h2><div class="sub">' + esc(u.name) + 'さん　最新（' + dlabel(last.date) + '）</div><div style="margin-top:6px"><span class="big" style="font-size:46px">' + r1(last.kg) + '</span> <span class="sub">kg' + (show.length > 1 ? '　この期間 ' + (chg > 0 ? '+' : '') + chg + ' kg' : '') + '</span></div>' + lineChart(show, tgt) + '</div>';
+  } else h += '<div class="card"><h2>WEIGHT</h2><div class="empty">' + deco('pointy', 'x') + '<div class="sub">体重の記録はまだありません</div></div></div>';
+  /* カロリー */
+  h += '<div class="card"><h2>CALORIES</h2><div class="anarow"><div><small>1日の平均摂取</small><span class="big" style="font-size:38px">' + avg + '</span><span class="sub"> kcal</span></div>' +
+    '<div><small>運動を引いた平均</small><span class="big" style="font-size:38px">' + net + '</span><span class="sub"> kcal</span></div></div>' +
+    '<div class="sub" style="margin-top:8px">' + (goal ? '目標 ' + goal + ' kcal　' : '') + '運動した日　' + exd + ' / ' + S.range + ' 日</div>' + barChart(days, goal) + '</div>';
+  /* 日別 */
+  h += '<div class="card"><h2>DAILY</h2><table>';
+  days.slice().reverse().forEach(function (x) {
+    var diff = goal && x.v ? (x.v - x.e) - goal : null;
+    h += '<tr data-d="' + x.d + '"><td>' + dlabel(x.d) + '</td><td>' + (x.v ? '<b style="font-weight:500">' + x.v + '</b> <span class="sub">kcal</span>' : '<span class="sub">—</span>') + (diff != null ? ' <span class="sub" style="color:' + (diff > 0 ? 'var(--over)' : 'var(--ok)') + ';margin-left:6px">' + (diff > 0 ? '+' : '') + diff + '</span>' : '') +
+      (x.e ? '<div class="sub">運動 −' + x.e + '</div>' : '') + (x.w ? '<div class="sub">体重 ' + r1(x.w) + ' kg</div>' : '') + '</td></tr>';
+  });
+  h += '</table></div>';
+  main.innerHTML = h;
+  document.querySelectorAll('[data-r]').forEach(function (b) { b.onclick = function () { S.range = +b.dataset.r; viewAna(); }; });
+  document.querySelectorAll('tr[data-d]').forEach(function (tr) { tr.onclick = function () { S.date = tr.dataset.d; S.tab = 'day'; show(); }; });
+}
+function barChart(days, goal) {
+  var W = 320, H = 150, top = 8, bot = 22, max = Math.max.apply(null, days.map(function (d) { return d.v; }).concat([goal * 1.15, 1]));
+  var bw = W / days.length, ph = H - top - bot, s = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="margin-top:16px">';
+  days.forEach(function (d, i) {
+    var h = d.v / max * ph, over = goal && d.v > goal;
+    s += '<rect x="' + (i * bw + bw * 0.2) + '" y="' + (top + ph - h) + '" width="' + (bw * 0.6) + '" height="' + h + '" rx="' + Math.min(4, bw * 0.3) + '" fill="' + (over ? '#c0392b' : '#E8691A') + '" opacity="' + (d.v ? 1 : 0) + '"/>';
+    if (days.length <= 14 || i % 5 === 0) s += '<text x="' + (i * bw + bw / 2) + '" y="' + (H - 6) + '" font-size="9" text-anchor="middle" fill="#8a847d">' + parseDate(d.d).getDate() + '</text>';
+  });
+  if (goal) { var y = top + ph - goal / max * ph; s += '<line x1="0" x2="' + W + '" y1="' + y + '" y2="' + y + '" stroke="#1f1d1b" stroke-dasharray="2 4" stroke-width="1"/><text x="' + W + '" y="' + (y - 4) + '" font-size="9" text-anchor="end" fill="#1f1d1b">目標 ' + goal + '</text>'; }
+  return s + '</svg>';
+}
+
+/* ---------- 体重の記録 ---------- */
+var W = null;
+function wlOf(uid) { return S.wl[uid] || []; }
+function setWl(date, kg) {
+  var l = wlOf(S.me).filter(function (w) { return w.date !== date; });
+  if (kg != null) l.push({ date: date, kg: kg });
+  l.sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+  S.wl[S.me] = l;
+}
+function openWt(date) {
+  var ex = wlOf(S.me).filter(function (w) { return w.date === date; })[0];
+  W = { date: date, kg: ex ? +ex.kg : curKg(S.me), exists: !!ex };
+  renderWt();
+}
+function prevWt(date) {
+  var l = wlOf(S.me).filter(function (w) { return w.date < date; });
+  return l.length ? l[l.length - 1] : null;
+}
+function renderWt() {
+  var old = $('#modal'); if (old) old.remove();
+  var pv = prevWt(W.date);
+  var h = '<div class="sheet"><h3>' + (W.exists ? '体重を編集' : '体重を記録') + '</h3>' +
+    '<div class="wbox"><button class="wstep" data-ws="-0.1">−</button><div class="wnum"><input id="w_kg" type="number" step="0.1" inputmode="decimal" value="' + W.kg + '"><span>kg</span></div><button class="wstep" data-ws="0.1">＋</button></div>' +
+    '<div class="sub" id="w_diff" style="text-align:center;margin-top:4px">' + wDiffText(pv) + '</div>' +
+    '<label class="f">日付</label>' + (W.exists ? '<div style="padding:4px 2px">' + esc(dlabel(W.date)) + '</div>' : '<input type="date" id="w_date" value="' + esc(W.date) + '">') +
+    '<div style="height:18px"></div><button class="primary" id="w_save">' + '保存する' + '</button><div style="height:8px"></div>' +
+    '<div class="grid2"><button class="ghost" id="w_cancel">閉じる</button>' + (W.exists ? '<button class="ghost danger" id="w_del">削除</button>' : '<span></span>') + '</div></div>';
+  var div = document.createElement('div'); div.className = 'modal'; div.id = 'modal'; div.innerHTML = h;
+  document.body.appendChild(div);
+  addX(div, function () { closeWt(); });
+  var inp = $('#w_kg');
+  var set = function (v) { W.kg = v; autoWt(); var d = $('#w_diff'); if (d) d.textContent = wDiffText(prevWt(W.date)); };
+  inp.oninput = function () { set(parseFloat(this.value) || 0); };
+  document.querySelectorAll('#modal [data-ws]').forEach(function (b) { b.onclick = function () { var v = r1((+inp.value || W.kg) + parseFloat(b.dataset.ws)); inp.value = v; set(v); }; });
+  if ($('#w_date')) $('#w_date').onchange = function () { W.date = this.value; var d = $('#w_diff'); if (d) d.textContent = wDiffText(prevWt(W.date)); };
+  $('#w_cancel').onclick = function () { closeWt(); };
+  $('#w_save').onclick = W.exists ? function () { finishWt(this); } : function () {
+    if (!(W.kg >= 20 && W.kg <= 300)) return toast('体重を入れてください');
+    var btn = this; btn.disabled = true; btn.innerHTML = '<span class="spin"></span>保存中…';
+    api('api_saveWeight', S.me, W.date, W.kg).then(function () { setWl(W.date, W.kg); dirty(); S.date = W.date; var wasNew = W; W = null; $('#modal').remove(); S.tab = 'day'; show(); toast('保存しました'); })
+      .catch(function (e) { toast(e.message); btn.disabled = false; btn.textContent = '保存する'; });
+  };
+  if ($('#w_del')) $('#w_del').onclick = function () {
+    if (!confirm('この体重の記録を削除しますか？')) return;
+    var d = W.date; clearTimeout(W.ah);
+    api('api_deleteWeight', S.me, d).then(function () { setWl(d, null); dirty(); W = null; $('#modal').remove(); S.tab = 'day'; show(); toast('削除しました'); }).catch(function (e) { toast(e.message); });
+  };
+}
+function wDiffText(pv) {
+  if (!pv) return '初めての記録です';
+  var d = r1(W.kg - pv.kg);
+  return '前回 ' + pv.kg + ' kg（' + dlabel(pv.date).split('（')[0] + '）　' + (d > 0 ? '+' : '') + d + ' kg';
+}
+function closeWt(force) {
+  if (W && W.exists && W.changed && !force && !confirm('変更を保存せずに閉じますか？')) return;
+  var m = $('#modal'); if (m) m.remove(); W = null;
+}
+function autoWt() { if (W && W.exists) W.changed = true; }
+function finishWt(btn) {
+  var e = W;
+  if (!(e.kg >= 20 && e.kg <= 300)) return toast('体重を入れてください');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span>保存中…';
+  api('api_saveWeight', S.me, e.date, e.kg).then(function () { setWl(e.date, e.kg); dirty(); closeWt(true); S.tab = 'day'; show(); toast('保存しました'); })
+    .catch(function (er) { toast(er.message); btn.disabled = false; btn.textContent = '保存する'; });
+}
+function lineChart(ws, tgt) {
+  var W = 320, H = 150, p = 24, kg = ws.map(function (w) { return w.kg; });
+  var all = tgt != null ? kg.concat([tgt]) : kg;
+  var mn = Math.min.apply(null, all) - 0.5, mx = Math.max.apply(null, all) + 0.5;
+  var t0 = parseDate(ws[0].date).getTime(), t1 = parseDate(ws[ws.length - 1].date).getTime(), span = Math.max(t1 - t0, 1);
+  var yOf = function (v) { return 10 + (mx - v) / (mx - mn) * (H - 34); };
+  var pts = ws.map(function (w) {
+    var x = ws.length === 1 ? W / 2 : p + (parseDate(w.date).getTime() - t0) / span * (W - p * 1.5);
+    return [x, yOf(w.kg)];
+  });
+  var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="margin-top:16px">';
+  if (tgt != null) s += '<line x1="' + p + '" x2="' + W + '" y1="' + yOf(tgt) + '" y2="' + yOf(tgt) + '" stroke="#1f1d1b" stroke-dasharray="2 4"/><text x="' + W + '" y="' + (yOf(tgt) - 4) + '" font-size="9" text-anchor="end" fill="#1f1d1b">目標 ' + tgt + '</text>';
+  s += '<polyline fill="none" stroke="#E8691A" stroke-width="1.8" stroke-linejoin="round" points="' + pts.map(function (q) { return q.join(','); }).join(' ') + '"/>';
+  pts.forEach(function (q) { s += '<circle cx="' + q[0] + '" cy="' + q[1] + '" r="3" fill="#fff" stroke="#E8691A" stroke-width="1.6"/>'; });
+  s += '<text x="2" y="14" font-size="9" fill="#8a847d">' + r1(mx) + '</text><text x="2" y="' + (H - 24) + '" font-size="9" fill="#8a847d">' + r1(mn) + '</text>';
+  s += '<text x="' + p + '" y="' + (H - 6) + '" font-size="9" fill="#8a847d">' + dlabel(ws[0].date).split('（')[0] + '</text><text x="' + (W - 4) + '" y="' + (H - 6) + '" font-size="9" text-anchor="end" fill="#8a847d">' + dlabel(ws[ws.length - 1].date).split('（')[0] + '</text>';
+  return s + '</svg>';
+}
+/* ---------- 設定 ---------- */
+var ACT = [[1.2, 'ほぼ運動しない（デスクワーク中心）'], [1.375, '軽い運動（週1〜3回）'], [1.55, '中程度の運動（週3〜5回）'], [1.725, '激しい運動（ほぼ毎日）']];
+var PACE = [[0, '体重維持'], [-1, '月1kg減（ゆっくり）'], [-2, '月2kg減'], [-3, '月3kg減（早め）'], [1, '月1kg増']];
+function recommend(f) {
+  var w = +f.weight, h = +f.height, a = +f.age; if (!w || !h || !a) return null;
+  var bmr = 10 * w + 6.25 * h - 5 * a + (f.sex === 'm' ? 5 : -161), tdee = bmr * (+f.activity);
+  var kcal = Math.round((tdee + (+f.pace) * 240) / 10) * 10, floor = f.sex === 'm' ? 1500 : 1200;
+  kcal = Math.max(kcal, floor);
+  var p = Math.round(w * 1.5), fat = Math.round(kcal * 0.25 / 9), c = Math.max(0, Math.round((kcal - p * 4 - fat * 9) / 4));
+  return { kcal: kcal, p: p, f: fat, c: c, bmr: Math.round(bmr), tdee: Math.round(tdee) };
+}
+function viewSettings() {
+  var u = S.creating ? { name: 'みなみ', sex: 'f', activity: 1.375, pace: -1, goalName: '卒園式', goalDate: '2027-03-31', goalKg: 8 } : user(S.me), main = $('#main');
+  var h = '<div class="card"><h2>' + (S.creating ? 'WELCOME　プロフィール登録' : 'PROFILE & GOAL') + '</h2>' +
+    '<label class="f" style="margin-top:0">名前</label><input id="s_name" value="' + esc(u.name || '') + '" maxlength="20">' +
+    '<div class="grid2"><div><label class="f">性別</label><select id="s_sex"><option value="m"' + (u.sex === 'm' ? ' selected' : '') + '>男性</option><option value="f"' + (u.sex === 'f' ? ' selected' : '') + '>女性</option></select></div>' +
+    '<div><label class="f">年齢</label><input id="s_age" type="number" inputmode="numeric" value="' + (u.age || '') + '"></div>' +
+    '<div><label class="f">身長(cm)</label><input id="s_height" type="number" inputmode="decimal" value="' + (u.height || '') + '"></div>' +
+    '<div><label class="f">現在の体重(kg)</label><input id="s_weight" type="number" inputmode="decimal" step="0.1" value="' + (u.weight || '') + '"></div></div>' +
+    '<label class="f">普段の活動量</label><select id="s_act">' + ACT.map(function (a) { return '<option value="' + a[0] + '"' + (+u.activity === a[0] ? ' selected' : '') + '>' + a[1] + '</option>'; }).join('') + '</select>' +
+    '<label class="f">目標ペース</label><select id="s_pace">' + PACE.map(function (a) { return '<option value="' + a[0] + '"' + (+u.pace === a[0] ? ' selected' : '') + '>' + a[1] + '</option>'; }).join('') + '</select>' +
+    '<div style="height:14px"></div><button class="ghost" id="calc">目標カロリーを自動計算</button><div id="calcnote" class="sub" style="margin-top:8px;line-height:1.6"></div>' +
+    '<div class="grid4" style="margin-top:14px"><div><label>1日 kcal</label><input id="s_kcal" type="number" value="' + (u.kcal || '') + '"></div><div><label>P(g)</label><input id="s_p" type="number" value="' + (u.p || '') + '"></div><div><label>F(g)</label><input id="s_f" type="number" value="' + (u.f || '') + '"></div><div><label>C(g)</label><input id="s_c" type="number" value="' + (u.c || '') + '"></div></div>' +
+    '<h2 style="margin-top:22px">中長期の目標</h2><label class="f" style="margin-top:0">目標の名前（例: 卒園式）</label><input id="s_gname" value="' + esc(u.goalName || '') + '" maxlength="30">' +
+    '<div class="grid2"><div><label class="f">目標の日</label><input type="date" id="s_gdate" value="' + esc(u.goalDate || '') + '"></div><div><label class="f">減らす体重(kg)</label><input id="s_gkg" type="number" inputmode="decimal" step="0.1" value="' + (u.goalKg || '') + '"></div></div>' +
+    '<label class="f">開始時の体重(kg)　※現在の体重ではなく、スタート時点</label><input id="s_skg" type="number" inputmode="decimal" step="0.1" value="' + (u.startKg || '') + '">' +
+    '<div style="height:18px"></div><button class="primary" id="ssave">保存する</button></div>';
+  main.innerHTML = h;
+  var form = function () {
+    return { id: S.creating ? '' : S.me, name: $('#s_name').value, sex: $('#s_sex').value, age: $('#s_age').value, height: $('#s_height').value, weight: $('#s_weight').value, activity: $('#s_act').value, pace: $('#s_pace').value, goalName: $('#s_gname').value, goalDate: $('#s_gdate').value, goalKg: $('#s_gkg').value, startKg: $('#s_skg').value, startDate: (S.creating ? S.today : (user(S.me).startDate || S.today)), kcal: $('#s_kcal').value, p: $('#s_p').value, f: $('#s_f').value, c: $('#s_c').value };
+  };
+  $('#calc').onclick = function () {
+    var r = recommend(form()); if (!r) return toast('年齢・身長・体重を入れてください');
+    $('#s_kcal').value = r.kcal; $('#s_p').value = r.p; $('#s_f').value = r.f; $('#s_c').value = r.c;
+    $('#calcnote').textContent = '基礎代謝 約' + r.bmr + ' kcal／消費 約' + r.tdee + ' kcal をもとに計算しました（数値は直接直せます）';
+  };
+  $('#ssave').onclick = function () {
+    api('api_saveUser', form()).then(function (rec) {
+      dirty(); S.me = rec.id; S.viewId = rec.id; S.creating = false;
+      return api('api_boot').then(function (r) { S.users = r.users; S.wl = r.weights || {}; toast('保存しました'); S.tab = 'day'; show(); });
+    }).catch(function (e) { toast(e.message); });
+  };
+}
+
+boot();
 </script>
 </body>
 </html>
