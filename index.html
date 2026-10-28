@@ -270,6 +270,7 @@ function swr(key, fetchFn, render, isActive) {
     var s = JSON.stringify(d);
     if (c && c.s === s) return;
     S.cache[key] = { s: s, data: d };
+    if (key === 'd|' + S.me + '|' + S.today) saveSnap(d); else saveSnap();
     if (isActive()) render(d);
   }).catch(function (e) { if (!c) $('#main').innerHTML = '<p>' + esc(e.message) + '</p>'; });
 }
@@ -332,9 +333,48 @@ function openGoal() {
   };
 }
 /* ---------- 起動 ---------- */
+/* 前回の起動データを端末に保存し、次回は通信を待たずに即表示する(裏で最新化) */
+var SNAP = 'pk_snap_v1';
+function loadSnap() { try { return JSON.parse(localStorage.getItem(SNAP) || 'null'); } catch (e) { return null; } }
+function saveSnap(day) {
+  try {
+    var s = loadSnap() || {};
+    s.users = S.users; s.wl = S.wl; s.me = S.me;
+    if (day) { s.date = S.today; s.day = day; }
+    localStorage.setItem(SNAP, JSON.stringify(s));
+  } catch (e) {}
+}
 function boot() {
+  var snap = loadSnap(), today = fmtDate(new Date());
+  var fast = snap && snap.users && snap.users.length && snap.me;
+  /* 当日分は api_boot と並列で取りに行く(直列だと待ち時間が倍になる) */
+  /* 当日の保存データが無ければ画面側(viewDay)が取りに行くのでここでは取らない */
+  var dayP = fast && snap.date === today && snap.day ? api('api_day', snap.me, today).catch(function () { return null; }) : null;
+  if (fast) {
+    S.users = snap.users; S.wl = snap.wl || {}; S.today = today; S.date = today; S.me = snap.me; S.viewId = snap.me;
+    if (snap.date === today && snap.day) S.cache['d|' + S.me + '|' + today] = { s: JSON.stringify(snap.day), data: snap.day };
+    show();
+    Promise.all([api('api_boot'), dayP]).then(function (x) {
+      var r = x[0], d = x[1];
+      if (!r.users.length || r.users[0].id !== S.me) return boot0(r);
+      var chg = JSON.stringify(r.users) !== JSON.stringify(S.users) || JSON.stringify(r.weights || {}) !== JSON.stringify(S.wl) || r.today !== S.today;
+      S.users = r.users; S.wl = r.weights || {};
+      if (r.today !== S.today) { S.today = r.today; S.date = r.today; d = null; }
+      var key = 'd|' + S.me + '|' + S.today, c = S.cache[key];
+      if (d) { if (!c || c.s !== JSON.stringify(d)) { S.cache[key] = { s: JSON.stringify(d), data: d }; chg = true; } }
+      saveSnap(d);
+      /* 入力中(シート表示中)は画面を差し替えない */
+      if (chg && !$('#modal') && S.tab === 'day' && S.viewId === S.me && S.date === S.today) show();
+    }).catch(function () { /* 前回データで表示済みなので黙って続行 */ });
+    return;
+  }
   $('#app').innerHTML = SPLASH;
-  api('api_boot').then(function (r) {
+  api('api_boot').then(boot0).catch(function (e) {
+    $('#app').innerHTML = '<div class="gate"><p>' + esc(e.message) + '</p><button class="ghost" onclick="boot()">再読み込み</button></div>';
+  });
+}
+function boot0(r) {
+  return Promise.resolve(r).then(function (r) {
     S.users = r.users; S.today = r.today; S.date = S.date || r.today; S.wl = r.weights || {};
     if (!S.users.length) { S.creating = true; S.tab = 'settings'; S.me = ''; show(); return; }
     S.me = S.users[0].id; S.viewId = S.me;
@@ -349,9 +389,7 @@ function boot() {
       d2.goalKg = 10;
       p = p.then(function () { return api('api_saveUser', d2); }).then(function (rec) { S.users[0] = rec; });
     }
-    return p.then(show);
-  }).catch(function (e) {
-    $('#app').innerHTML = '<div class="gate"><p>' + esc(e.message) + '</p><button class="ghost" onclick="boot()">再読み込み</button></div>';
+    return p.then(function () { saveSnap(); show(); });
   });
 }
 /* ---------- 画面骨格 ---------- */
