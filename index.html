@@ -168,6 +168,24 @@ button.primary,.fab button,.chip{transition:transform .12s}
 button.primary:active,.fab button:active,.chip:active{transform:scale(.97)}
 .fab button{padding:16px 26px;font-size:15.5px}
 .datebar b{font-size:16px}
+.datebar b#dsel{cursor:pointer;padding:6px 10px;border-radius:12px}
+.datebar b#dsel:active{background:var(--soft)}
+.datebar b#dsel:after{content:"";display:inline-block;width:6px;height:6px;border-right:1.5px solid var(--sub);border-bottom:1.5px solid var(--sub);transform:rotate(45deg);margin:0 0 4px 8px}
+.calhd{display:flex;align-items:center;justify-content:space-between;margin:4px 0 10px}
+.calhd b{font-size:17px;font-weight:500;letter-spacing:.04em}
+.calhd button{border:0;background:none;font-size:22px;width:44px;height:38px;border-radius:12px;color:var(--sub);font-family:inherit}
+.calhd button:active{background:var(--soft)}
+.calg{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.calg .w{text-align:center;font-size:11px;color:var(--sub);padding:2px 0 6px;letter-spacing:.06em}
+.calg .w.su{color:var(--over)}.calg .w.sa{color:#3a6ea5}
+.calg button{border:0;background:none;font-family:inherit;color:var(--ink);height:52px;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:7px 0 0;font-size:15px;font-variant-numeric:tabular-nums}
+.calg button:active{background:var(--soft)}
+.calg button small{font-size:9.5px;color:var(--sub);margin-top:3px;letter-spacing:0}
+.calg button small.ov{color:var(--over)}
+.calg button.td{box-shadow:inset 0 0 0 1.5px var(--accent);color:var(--accent);font-weight:500}
+.calg button.on{background:var(--accent);color:#fff;box-shadow:none}
+.calg button.on small{color:rgba(255,255,255,.85)}
+.calg button.fu{color:#c9c0b4}
 .datebar button{width:44px;height:36px;border-radius:12px}
 .datebar button:active{background:var(--soft)}
 @keyframes up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -427,6 +445,42 @@ function ring(pct, over) {
 function strip(thumbs) {
   return thumbs && thumbs.length ? '<div class="strip">' + thumbs.map(function (t) { return '<img src="' + esc(t) + '">'; }).join('') + '</div>' : '';
 }
+/* 日付タップで開くカレンダー。日付を押すとその日の記録へ */
+var CM = null;
+function openCal() { CM = S.date.slice(0, 7); renderCal(); }
+function closeCal() { var m = $('#modal'); if (m) m.remove(); CM = null; }
+function renderCal() {
+  var old = $('#modal'); if (old) old.remove();
+  var y = +CM.slice(0, 4), mo = +CM.slice(5, 7), first = new Date(y, mo - 1, 1), n = new Date(y, mo, 0).getDate();
+  var from = CM + '-01', to = CM + '-' + pad(n), key = 'm|' + S.viewId + '|' + CM, c = S.cache[key], goal = +user(S.viewId).kcal || 0;
+  var net = {};
+  if (c) { c.data.meals.forEach(function (m) { net[m.date] = (net[m.date] || 0) + (+m.kcal || 0); }); c.data.exs.forEach(function (x) { net[x.date] = (net[x.date] || 0) - (+x.kcal || 0); }); }
+  var h = '<div class="sheet"><h3>日付を選ぶ</h3><div class="calhd"><button id="cprev">‹</button><b>' + y + '年' + mo + '月</b><button id="cnext">›</button></div><div class="calg">' +
+    '日月火水木金土'.split('').map(function (w, i) { return '<div class="w' + (i === 0 ? ' su' : i === 6 ? ' sa' : '') + '">' + w + '</div>'; }).join('');
+  for (var i = 0; i < first.getDay(); i++) h += '<span></span>';
+  for (var d = 1; d <= n; d++) {
+    var ds = CM + '-' + pad(d), v = net[ds];
+    h += '<button data-cd="' + ds + '" class="' + (ds === S.date ? 'on ' : '') + (ds === S.today ? 'td ' : '') + (ds > S.today ? 'fu' : '') + '">' + d +
+      (v != null ? '<small' + (goal && v > goal ? ' class="ov"' : '') + '>' + Math.round(v) + '</small>' : '') + '</button>';
+  }
+  h += '</div><div class="sub" style="text-align:center;margin-top:10px">' + (c ? '数字はその日のトータルkcal' : '<span class="spin" style="border-color:var(--sub);border-top-color:transparent"></span>記録を読み込み中…') + '</div>' +
+    '<div style="height:14px"></div><div class="grid2"><button class="ghost" id="c_today">今日へ</button><button class="ghost" id="c_close">閉じる</button></div></div>';
+  var div = document.createElement('div'); div.className = 'modal'; div.id = 'modal'; div.innerHTML = h;
+  document.body.appendChild(div);
+  addX(div, closeCal);
+  div.onclick = function (e) { if (e.target === div) closeCal(); };
+  var go = function (ds) { closeCal(); S.date = ds; S.tab = 'day'; show(); };
+  div.querySelectorAll('[data-cd]').forEach(function (b) { b.onclick = function () { go(b.dataset.cd); }; });
+  $('#c_today').onclick = function () { go(S.today); };
+  $('#c_close').onclick = closeCal;
+  var mv = function (k) { var t = new Date(y, mo - 1 + k, 1); CM = t.getFullYear() + '-' + pad(t.getMonth() + 1); renderCal(); };
+  $('#cprev').onclick = function () { mv(-1); };
+  $('#cnext').onclick = function () { mv(1); };
+  if (!c) api('api_range', S.viewId, from, to).then(function (r) {
+    S.cache[key] = { s: '', data: r };
+    if (CM === key.split('|')[2] && $('#modal .calg')) renderCal();
+  }).catch(function () {});
+}
 function viewDay() {
   var key = 'd|' + S.viewId + '|' + S.date;
   swr(key, function () { return api('api_day', S.viewId, S.date); }, renderDay, function () { return S.tab === 'day' && key === 'd|' + S.viewId + '|' + S.date; });
@@ -437,7 +491,7 @@ function renderDay(r) {
   S.exs = r.exs.slice().sort(function (a, b) { return a.time < b.time ? -1 : 1; });
   var t = sum(S.meals), burn = S.exs.reduce(function (a, x) { return a + (+x.kcal || 0); }, 0);
   var goal = +u.kcal || 0, net = t.kcal - burn, left = goal - net;
-    var h = '<div class="datebar"><button id="prev">‹</button><b>' + dlabel(S.date) + (S.date === S.today ? ' ・今日' : '') + '</b><button id="next">›</button></div>';
+    var h = '<div class="datebar"><button id="prev">‹</button><b id="dsel">' + dlabel(S.date) + (S.date === S.today ? ' ・今日' : '') + '</b><button id="next">›</button></div>';
     h += '<div class="card hero">' + (isMine() ? '<img class="me" src="' + ABE + '" alt="">' + deco('tanaka', 'me2') : '') + '<div class="sub" style="letter-spacing:.14em">' + esc(u.name) + 'さんのトータルカロリー</div>' +
       '<div class="ringwrap" style="margin-top:14px">' + ring(goal ? net / goal : 0, left < 0) + '<div class="ringin"><span class="big">' + Math.round(net) + '</span><span class="sub">トータル kcal</span></div></div>';
     h += '<div class="eq"><div><small>摂取</small><b>' + Math.round(t.kcal) + '</b></div><i>−</i><div><small>消費（運動）</small><b>' + Math.round(burn) + '</b></div></div>';
@@ -466,6 +520,7 @@ function renderDay(r) {
     main.innerHTML = h;
     $('#prev').onclick = function () { S.date = addDays(S.date, -1); viewDay(); };
     $('#next').onclick = function () { S.date = addDays(S.date, 1); viewDay(); };
+    $('#dsel').onclick = function () { openCal(); };
     if ($('#add')) $('#add').onclick = function () { openMeal(null); };
     if ($('#addEx')) $('#addEx').onclick = function () { openEx(null); };
     if ($('#addW')) $('#addW').onclick = function () { openWt(S.date); };
