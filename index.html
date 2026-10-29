@@ -12,6 +12,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Yomogi&display=swap">
 <style>
 :root{--accent:#E8691A;--ink:#1f1d1b;--bg:#faf8f5;--card:#fff;--sub:#8a847d;--line:#ece8e2;--soft:#f3efe9;--over:#c0392b;--ok:#4f7a63;--shadow:0 1px 2px rgba(31,29,27,.04),0 10px 30px rgba(31,29,27,.05)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -103,6 +104,11 @@ input:focus,select:focus,textarea:focus{outline:0;border-color:var(--ink)}
 .gbar i{display:block;height:100%;background:var(--accent);border-radius:2px}
 .gs{font-size:11.5px;color:var(--sub);line-height:1.6}
 .xclose{position:sticky;top:6px;display:block;margin:-6px 0 -30px auto;width:36px;height:36px;border-radius:50%;border:0;background:var(--soft);color:var(--ink);font-size:21px;line-height:36px;padding:0;z-index:3}
+.cheer{margin:10px 4px 0;padding:9px 14px 8px;background:#fff8e6;border-radius:6px;transform:rotate(-.6deg);box-shadow:0 1px 3px rgba(31,29,27,.1);font-family:"Yomogi","Klee","Hannotate SC","Yuji Syuku",cursive;color:#3a3430;position:relative;line-height:1.55}
+.cheer:before{content:"";position:absolute;left:50%;top:-6px;width:44px;height:12px;margin-left:-22px;background:rgba(232,105,26,.35);transform:rotate(2deg)}
+.cheer .ct{font-size:10.5px;letter-spacing:.08em;color:var(--accent)}
+.cheer .cm{font-size:14.5px;margin-top:1px}
+.cheer .cs{font-size:11px;text-align:right;color:var(--sub);margin-top:1px}
 .card{position:relative}
 .hero .me2{position:absolute;right:16px;top:14px;height:50px;width:auto;opacity:.92;pointer-events:none}
 .deco{position:absolute;right:18px;top:14px;height:42px;width:auto;pointer-events:none}
@@ -481,6 +487,35 @@ function renderCal() {
     if (CM === key.split('|')[2] && $('#modal .calg')) renderCal();
   }).catch(function () {});
 }
+/* カズさんの応援メッセージ（昨日の目標達成度でひとこと） */
+var CHEER = {
+  none: ['昨日は記録ゼロ。食べてないのか、撮ってないのか…どっち？今日はちゃんと撮ろ。', '昨日の記録が見当たらないよ。まさか幻の1日？今日は証拠を残そう！', '昨日は空白。カメラは飾りじゃないぞ〜。今日はパシャッと頼む！'],
+  great: ['昨日はよく頑張った！えらい！今日もこの調子で、ゴールまで「きっとカツ」だ！', '昨日は完璧！やればできる子だね。調子に乗らない程度に、今日もよろしく！', '昨日は文句なし。…でも油断すると今日の自分が泣くぞ。キープ！'],
+  ok: ['昨日はほぼ目標どおり！合格ライン、ギリ超え。今日も受験生の気持ちでいこう！', '昨日はちゃんと守れたね。ほめてつかわす。今日もその調子で！', '昨日はいい線いってた。ちょっと褒めすぎたかな？今日もがんばろ！'],
+  over: ['昨日はちょっとオーバー。でも誰にだってあるさ。今日は取り返す日、「きっとカツ」！', '昨日は少し食べすぎたね。ま、人間だもの。今日はちょっとだけ引き締めよう！', '昨日はオーバー気味。うん、おいしかったんだよね。わかる。今日は我慢の日！'],
+  big: ['昨日は盛大にオーバー！…まあ過ぎたことは仕方ない。今日からの逆転合格を信じてる！', '昨日はやっちゃったねぇ。体重計は見逃してくれないぞ？今日でしっかり挽回しよう！', '昨日は食べたねぇ〜！全部おいしかった？なら良し。ただし今日は反省会だ！']
+};
+function cheerText(yd, goal) {
+  var net = sum(yd.meals).kcal - yd.exs.reduce(function (a, x) { return a + (+x.kcal || 0); }, 0);
+  var k = !yd.meals.length ? 'none' : (net <= goal * .85 ? 'great' : net <= goal ? 'ok' : net <= goal * 1.15 ? 'over' : 'big');
+  var h = 0, d = S.today; for (var i = 0; i < d.length; i++) h = (h * 31 + d.charCodeAt(i)) % 9973;
+  var m = CHEER[k][h % CHEER[k].length];
+  var diff = Math.round(net - goal);
+  return { msg: m, note: k === 'none' ? '' : '昨日 ' + Math.round(net) + ' kcal（目標' + (diff > 0 ? '+' : '') + diff + '）' };
+}
+function fillCheer() {
+  var el = $('#cheer'); if (!el || !isMine() || S.date !== S.today) return;
+  var goal = +user(S.me).kcal || 0; if (!goal) return;
+  var ys = addDays(S.today, -1), key = 'd|' + S.me + '|' + ys;
+  var draw = function (yd) {
+    var e = $('#cheer'); if (!e || !yd || !yd.meals) return;
+    var t = cheerText(yd, goal);
+    e.innerHTML = '<div class="cheer"><div class="ct">カズさんの応援メッセージ</div><div class="cm">' + esc(t.msg) + '</div><div class="cs">' + esc(t.note) + '　― カズより</div></div>';
+  };
+  var c = S.cache[key];
+  if (c) return draw(c.data);
+  api('api_day', S.me, ys).then(function (d) { S.cache[key] = { s: JSON.stringify(d), data: d }; draw(d); }).catch(function () {});
+}
 function viewDay() {
   var key = 'd|' + S.viewId + '|' + S.date;
   swr(key, function () { return api('api_day', S.viewId, S.date); }, renderDay, function () { return S.tab === 'day' && key === 'd|' + S.viewId + '|' + S.date; });
@@ -492,6 +527,7 @@ function renderDay(r) {
   var t = sum(S.meals), burn = S.exs.reduce(function (a, x) { return a + (+x.kcal || 0); }, 0);
   var goal = +u.kcal || 0, net = t.kcal - burn, left = goal - net;
     var h = '<div class="datebar"><button id="prev">‹</button><b id="dsel">' + dlabel(S.date) + (S.date === S.today ? ' ・今日' : '') + '</b><button id="next">›</button></div>';
+    h += '<div id="cheer"></div>';
     h += '<div class="card hero">' + (isMine() ? '<img class="me" src="' + ABE + '" alt="">' + deco('tanaka', 'me2') : '') + '<div class="sub" style="letter-spacing:.14em">' + esc(u.name) + 'さんのトータルカロリー</div>' +
       '<div class="ringwrap" style="margin-top:14px">' + ring(goal ? net / goal : 0, left < 0) + '<div class="ringin"><span class="big">' + Math.round(net) + '</span><span class="sub">トータル kcal</span></div></div>';
     h += '<div class="eq"><div><small>摂取</small><b>' + Math.round(t.kcal) + '</b></div><i>−</i><div><small>消費（運動）</small><b>' + Math.round(burn) + '</b></div></div>';
@@ -518,6 +554,7 @@ function renderDay(r) {
     h += '<div class="card" id="wcard"><h2>WEIGHT</h2>' + (wr ? '<div class="exrow" style="border:0;padding:2px 0 0"><div><b>体重</b><div class="sub">' + (wp ? '前回 ' + r1(wp.kg) + ' kg（' + dlabel(wp.date).split('（')[0] + '）' : '初めての記録') + '</div></div><div class="k">' + r1(wr.kg) + '<small>kg</small>' + (wp ? '<span class="wd' + (wr.kg - wp.kg > 0 ? ' up' : '') + '">' + (wr.kg - wp.kg > 0 ? '+' : '') + r1(wr.kg - wp.kg) + '</span>' : '') + '</div></div>' : '<div class="sub" style="padding:6px 0 4px">まだ記録がありません</div>') + '</div>';
     if (isMine()) h += '<div class="fab"><button id="add">＋ 食事</button><button id="addEx" class="ink">＋ 運動</button><button id="addW" class="ghostfab">＋ 体重</button></div>';
     main.innerHTML = h;
+    fillCheer();
     $('#prev').onclick = function () { S.date = addDays(S.date, -1); viewDay(); };
     $('#next').onclick = function () { S.date = addDays(S.date, 1); viewDay(); };
     $('#dsel').onclick = function () { openCal(); };
