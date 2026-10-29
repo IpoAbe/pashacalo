@@ -503,18 +503,51 @@ function cheerText(yd, goal) {
   var diff = Math.round(net - goal);
   return { msg: m, note: k === 'none' ? '' : '昨日 ' + Math.round(net) + ' kcal（目標' + (diff > 0 ? '+' : '') + diff + '）' };
 }
+/* 13時以降は今日の進捗で、間食・夕食・運動へのひとこと */
+var CHEER_NOW = {
+  none: ['まだ今日の記録がゼロ。お昼抜き？それとも撮り忘れ？どっちにしても報告よろしく！', '今日はまだ記録なし。食べたものは正直に申告するように！'],
+  easy: ['ここまで順調！夕食は好きなものを食べてよし。ただし食べすぎは別腹じゃないぞ！', '余裕あり。間食してもいいけど、ほどほどにね。夕食のためにとっておこう！'],
+  mid: ['ここまでいい感じ。間食は小さめにして、夕食でしっかり食べよう！', 'ペースは普通。おやつは1個まで。欲張ると夕食が泣くぞ！'],
+  tight: ['けっこう食べたね〜。間食はガマン！夕食は軽めにして、ちょい歩けば大丈夫！', '残りは少なめ。おやつは見なかったことに。夕食は汁物とサラダでいこう！'],
+  full: ['もう残りわずか！間食は禁止、夕食はスープ程度。誘惑には「きっとカツ」の精神で！', '朝昼で使いすぎ気味。夕食は思い切って軽く！ご飯はお茶碗半分で手を打とう！'],
+  over: ['もう目標オーバー。今日の夕食はガマンの日！あとウォーキング30分で挽回しよう！', 'お昼までに食べすぎちゃったね。夕食は最小限に、運動で帳尻合わせといこう！']
+};
+var CHEER_EVE = {
+  rich: ['夕食はしっかり食べて大丈夫！ただし「しっかり」と「たらふく」は別物だぞ！', 'まだ余裕あり。バランスよく食べよう。タンパク質を忘れずに！'],
+  light: ['夕食は軽め推奨。炭水化物は控えめにして、野菜から食べよう！', '残りはそこそこ。夕食は腹八分目、デザートは目で食べよう！'],
+  tight: ['残りわずか。夕食はスープとサラダくらいで！寝る前に後悔したくないでしょ？', '夕食は我慢の時。温かいお茶でごまかそう。夜に勝つ者は、受験にも勝つ！'],
+  over: ['すでにオーバー。夕食は思い切って減らして、ウォーキングも入れよう。今ならまだ間に合う！', '今日は食べたねぇ。夕食は最小限に。運動してから食べるのも手だぞ！']
+};
+var CHEER_NIGHT = {
+  good: ['今日もよく頑張った！夜食は我慢してゆっくり休もう。おつかれ！', '目標内で着地！えらい！あとは寝るだけ。冷蔵庫は開けないように！'],
+  over: ['今日はオーバー。夜食は絶対NG！ぐっすり寝て、明日で取り返そう！', 'もう食べないこと。お風呂とストレッチで気持ちを切り替えて、明日が勝負だ！']
+};
+function pick(arr) {
+  var h = 0, d = S.today + new Date().getHours(); for (var i = 0; i < d.length; i++) h = (h * 31 + d.charCodeAt(i)) % 9973;
+  return arr[h % arr.length];
+}
+function cheerNow(goal) {
+  var hr = new Date().getHours(), net = sum(S.meals).kcal - S.exs.reduce(function (a, x) { return a + (+x.kcal || 0); }, 0);
+  var left = Math.round(goal - net), r = net / goal, m;
+  if (!S.meals.length && hr < 21) m = pick(CHEER_NOW.none);
+  else if (hr >= 21) m = pick(net <= goal ? CHEER_NIGHT.good : CHEER_NIGHT.over);
+  else if (hr >= 17) m = pick(left >= 600 ? CHEER_EVE.rich : left >= 300 ? CHEER_EVE.light : left >= 0 ? CHEER_EVE.tight : CHEER_EVE.over);
+  else m = pick(r < .4 ? CHEER_NOW.easy : r < .6 ? CHEER_NOW.mid : r < .85 ? CHEER_NOW.tight : r <= 1 ? CHEER_NOW.full : CHEER_NOW.over);
+  return { msg: m, note: S.meals.length ? '今日ここまで ' + Math.round(net) + ' kcal（' + (left >= 0 ? '残り ' + left : '目標+' + (-left)) + '）' : '' };
+}
 function fillCheer() {
   var el = $('#cheer'); if (!el || !isMine() || S.date !== S.today) return;
   var goal = +user(S.me).kcal || 0; if (!goal) return;
-  var ys = addDays(S.today, -1), key = 'd|' + S.me + '|' + ys;
-  var draw = function (yd) {
-    var e = $('#cheer'); if (!e || !yd || !yd.meals) return;
-    var t = cheerText(yd, goal);
+  var draw = function (t) {
+    var e = $('#cheer'); if (!e) return;
     e.innerHTML = '<div class="cheer"><div class="ct">カズさんの応援メッセージ</div><div class="cm">' + esc(t.msg) + '</div><div class="cs">' + esc(t.note) + '　― カズより</div></div>';
   };
+  if (new Date().getHours() >= 13) return draw(cheerNow(goal));
+  var ys = addDays(S.today, -1), key = 'd|' + S.me + '|' + ys;
+  var dy = function (yd) { if (yd && yd.meals) draw(cheerText(yd, goal)); };
   var c = S.cache[key];
-  if (c) return draw(c.data);
-  api('api_day', S.me, ys).then(function (d) { S.cache[key] = { s: JSON.stringify(d), data: d }; draw(d); }).catch(function () {});
+  if (c) return dy(c.data);
+  api('api_day', S.me, ys).then(function (d) { S.cache[key] = { s: JSON.stringify(d), data: d }; dy(d); }).catch(function () {});
 }
 function viewDay() {
   var key = 'd|' + S.viewId + '|' + S.date;
