@@ -540,7 +540,7 @@ function fillCheer() {
   var goal = +user(S.me).kcal || 0; if (!goal) return;
   var draw = function (t) {
     var e = $('#cheer'); if (!e) return;
-    e.innerHTML = '<div class="cheer"><div class="ct">カズさんの応援メッセージ</div><div class="cm">' + esc(t.msg) + '</div><div class="cs">' + esc(t.note) + '　― カズより</div></div>';
+    e.innerHTML = '<div class="cheer"><div class="ct">カズさんの応援メッセージ</div><div class="cm">' + esc(t.msg) + '</div></div>';
   };
   if (new Date().getHours() >= 13) return draw(cheerNow(goal));
   var ys = addDays(S.today, -1), key = 'd|' + S.me + '|' + ys;
