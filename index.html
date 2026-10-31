@@ -1031,10 +1031,10 @@ function renderAna(d) {
   document.querySelectorAll('tr[data-d],rect[data-bd]').forEach(function (el) { el.onclick = function () { S.date = el.dataset.d || el.dataset.bd; S.tab = 'day'; show(); window.scrollTo(0, 0); }; });
 }
 function barChart(days, goal) {
-  var W = 320, H = 150, top = 8, bot = 22, max = Math.max.apply(null, days.map(function (d) { return d.v; }).concat([goal * 1.15, 1]));
+  var W = 320, H = 150, top = 8, bot = 22, nt = function (d) { return Math.max(0, d.v - d.e); }, max = Math.max.apply(null, days.map(nt).concat([goal * 1.15, 1]));
   var bw = W / days.length, ph = H - top - bot, s = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="margin-top:16px">';
   days.forEach(function (d, i) {
-    var h = d.v / max * ph, over = goal && d.v > goal;
+    var h = nt(d) / max * ph, over = goal && nt(d) > goal;
     s += '<rect x="' + (i * bw + bw * 0.2) + '" y="' + (top + ph - h) + '" width="' + (bw * 0.6) + '" height="' + h + '" rx="' + Math.min(4, bw * 0.3) + '" fill="' + (over ? '#c0392b' : '#E8691A') + '" opacity="' + (d.v ? 1 : 0) + '"/>';
     s += '<rect data-bd="' + d.d + '" x="' + (i * bw) + '" y="0" width="' + bw + '" height="' + H + '" fill="transparent" style="cursor:pointer"/>';
     if (days.length <= 14 || i % 5 === 0) s += '<text x="' + (i * bw + bw / 2) + '" y="' + (H - 6) + '" font-size="9" text-anchor="middle" fill="#8a847d">' + parseDate(d.d).getDate() + '</text>';
