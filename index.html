@@ -12,7 +12,8 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Yomogi&display=swap">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Yomogi&display=swap" media="print" onload="this.media='all'">
 <style>
 :root{--accent:#E8691A;--ink:#1f1d1b;--bg:#faf8f5;--card:#fff;--sub:#8a847d;--line:#ece8e2;--soft:#f3efe9;--over:#c0392b;--ok:#4f7a63;--shadow:0 1px 2px rgba(31,29,27,.04),0 10px 30px rgba(31,29,27,.05)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -435,6 +436,8 @@ function show() {
   document.querySelectorAll('[data-goto]').forEach(function (b) { b.onclick = function () { S.tab = b.dataset.goto; show(); }; });
   document.querySelectorAll('[data-t]').forEach(function (b) { b.onclick = function () { S.tab = b.dataset.t; show(); }; });
   ({ day: viewDay, ana: viewAna, settings: viewSettings })[S.tab]();
+  /* 記録画面が出た後、分析のデータを裏で先読み(開いたとき即表示) */
+  if (!S.pre && S.tab === 'day' && !S.creating) { S.pre = 1; setTimeout(function () { var u = S.viewId, k = 'a|' + u; if (S.cache[k]) return; api('api_range', u, addDays(S.today, -29), S.today).then(function (r) { if (!S.cache[k]) S.cache[k] = { s: '', data: { r: r, ws: S.wl[u] || [] } }; }).catch(function () {}); }, 2500); }
 }
 function isMine() { return S.viewId === S.me; }
 
@@ -989,10 +992,11 @@ function toJpeg(im, max, q) {
 
 /* ---------- 履歴 ---------- */
 function viewAna() {
-  var key = 'a|' + S.viewId + '|' + S.range;
+  /* 通信は30日分を1回だけ(体重は起動時データを再利用)。7/14日の切替は端末内で即時 */
+  var key = 'a|' + S.viewId, uid = S.viewId;
   swr(key, function () {
-    return Promise.all([api('api_range', S.viewId, addDays(S.today, -(S.range - 1)), S.today), api('api_listWeights', S.viewId)]).then(function (x) { return { r: x[0], ws: x[1] }; });
-  }, renderAna, function () { return S.tab === 'ana' && key === 'a|' + S.viewId + '|' + S.range; });
+    return api('api_range', uid, addDays(S.today, -29), S.today).then(function (r) { return { r: r, ws: S.wl[uid] || [] }; });
+  }, function (d) { d.ws = S.wl[uid] || d.ws; renderAna(d); }, function () { return S.tab === 'ana' && key === 'a|' + S.viewId; });
 }
 function renderAna(d) {
   var r = d.r, ws = d.ws || [], u = user(S.viewId), main = $('#main'), from = addDays(S.today, -(S.range - 1));
@@ -1015,15 +1019,14 @@ function renderAna(d) {
     h += '<div class="card"><h2>WEIGHT</h2><div class="sub">' + esc(u.name) + 'さん　最新（' + dlabel(last.date) + '）</div><div style="margin-top:6px"><span class="big" style="font-size:46px">' + r1(last.kg) + '</span> <span class="sub">kg' + (wv.length > 1 ? '　この期間 ' + (chg > 0 ? '+' : '') + chg + ' kg' : '') + '</span></div>' + lineChart(wv, tgt) + '</div>';
   } else h += '<div class="card"><h2>WEIGHT</h2><div class="empty">' + deco('pointy', 'x') + '<div class="sub">体重の記録はまだありません</div></div></div>';
   /* カロリー */
-  h += '<div class="card"><h2>CALORIES</h2><div class="anarow"><div><small>1日の平均摂取</small><span class="big" style="font-size:38px">' + avg + '</span><span class="sub"> kcal</span></div>' +
-    '<div><small>運動を引いた平均</small><span class="big" style="font-size:38px">' + net + '</span><span class="sub"> kcal</span></div></div>' +
+  h += '<div class="card"><h2>CALORIES</h2><div class="anarow"><div><small>1日の平均（運動を引いたトータル）</small><span class="big" style="font-size:38px">' + net + '</span><span class="sub"> kcal</span></div></div>' +
     '<div class="sub" style="margin-top:8px">' + (goal ? '目標 ' + goal + ' kcal　' : '') + '運動した日　' + exd + ' / ' + S.range + ' 日</div>' + barChart(days, goal) + '</div>';
   /* 日別 */
   h += '<div class="card"><h2>DAILY</h2><table>';
   days.slice().reverse().forEach(function (x) {
     var diff = goal && x.v ? (x.v - x.e) - goal : null;
-    h += '<tr data-d="' + x.d + '"><td>' + dlabel(x.d) + '</td><td>' + (x.v ? '<b style="font-weight:500">' + x.v + '</b> <span class="sub">kcal</span>' : '<span class="sub">—</span>') + (diff != null ? ' <span class="sub" style="color:' + (diff > 0 ? 'var(--over)' : 'var(--ok)') + ';margin-left:6px">' + (diff > 0 ? '+' : '') + diff + '</span>' : '') +
-      (x.e ? '<div class="sub">運動 −' + x.e + '</div>' : '') + (x.w ? '<div class="sub">体重 ' + r1(x.w) + ' kg</div>' : '') + '</td></tr>';
+    h += '<tr data-d="' + x.d + '"><td>' + dlabel(x.d) + '</td><td>' + (x.v ? '<b style="font-weight:500">' + (x.v - x.e) + '</b> <span class="sub">kcal</span>' : '<span class="sub">—</span>') + (diff != null ? ' <span class="sub" style="color:' + (diff > 0 ? 'var(--over)' : 'var(--ok)') + ';margin-left:6px">' + (diff > 0 ? '+' : '') + diff + '</span>' : '') +
+      (x.e ? '<div class="sub">摂取 ' + x.v + '　運動 −' + x.e + '</div>' : '') + (x.w ? '<div class="sub">体重 ' + r1(x.w) + ' kg</div>' : '') + '</td></tr>';
   });
   h += '</table></div>';
   main.innerHTML = h;
