@@ -152,7 +152,18 @@ h2:before{content:"";width:3px;height:11px;border-radius:2px;background:var(--ac
 .hero{background:linear-gradient(180deg,#fff 0%,#fffaf5 100%)}
 .ringwrap{filter:drop-shadow(0 6px 14px rgba(232,105,26,.18))}
 .ringin .big{font-size:54px;font-weight:200}
-.rarc{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
+.rarc{transition:stroke-dasharray 1.1s cubic-bezier(.2,.8,.2,1)}
+/* インフォグラフィックアニメーション（画面を開いた時だけ再生） */
+.pfc .bar>i{transition:width .9s cubic-bezier(.2,.8,.2,1) .25s}
+.anim .bc{transform-box:fill-box;transform-origin:50% 100%;animation:grow .7s cubic-bezier(.2,.8,.2,1) both}
+@keyframes grow{from{transform:scaleY(0)}to{transform:none}}
+.anim .lc{stroke-dasharray:1;stroke-dashoffset:1;animation:draw 1.3s cubic-bezier(.4,0,.2,1) .15s forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.anim .lp{transform-box:fill-box;transform-origin:center;animation:pop .35s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes pop{from{transform:scale(0);opacity:0}to{transform:none;opacity:1}}
+.anim .gl{opacity:0;animation:fadein .5s ease .9s forwards}
+@keyframes fadein{to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.anim .bc,.anim .lc,.anim .lp,.anim .gl{animation:none;opacity:1;stroke-dashoffset:0}.rarc,.pfc .bar>i{transition:none}}
 .pfc b{font-size:18px}
 .bar{height:4px}
 .goal .gt{font-size:26px}
@@ -451,6 +462,30 @@ function ring(pct, over) {
     '<circle cx="98" cy="98" r="' + R + '" fill="none" stroke="#f3efe9" stroke-width="10"/>' +
     '<circle class="rarc" cx="98" cy="98" r="' + R + '" fill="none" stroke="' + col + '" stroke-width="10" stroke-linecap="round" stroke-dasharray="' + (C * Math.min(1, pct)) + ' ' + C + '"/></svg>';
 }
+/* 数字のカウントアップ・リング・バーの再生。同じ画面の再描画（裏の最新化）では再生しない */
+var FXK = '';
+function fx(key) {
+  var main = $('#main'); if (!main) return;
+  var on = key !== FXK && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  FXK = key; main.classList.toggle('anim', on);
+  if (!on) return;
+  main.querySelectorAll('.ringin .big,.eq b,.rest b,.pfc b,.card .big').forEach(function (el) {
+    var t = el.textContent.trim(); if (!/^-?\d+(\.\d+)?$/.test(t)) return;
+    var to = +t, dec = (t.split('.')[1] || '').length, from = dec ? Math.floor(to * 0.92) : 0, t0 = 0, D = 1000;
+    el.textContent = from.toFixed(dec);
+    t0 = Date.now();
+    var step = function () { var k = Math.min(1, (Date.now() - t0) / D), e = 1 - Math.pow(1 - k, 3); el.textContent = k < 1 ? (from + (to - from) * e).toFixed(dec) : t; if (k < 1 && el.isConnected) setTimeout(step, 16); };
+    setTimeout(step, 16);
+  });
+  var arcs = main.querySelectorAll('.rarc'), bars = main.querySelectorAll('.pfc .bar>i'), keep = [];
+  arcs.forEach(function (a) { keep.push(a.getAttribute('stroke-dasharray')); a.style.transition = 'none'; a.setAttribute('stroke-dasharray', '0 999'); });
+  bars.forEach(function (b) { b.dataset.w = b.style.width; b.style.width = '0'; });
+  main.getBoundingClientRect();
+  setTimeout(function () {
+    arcs.forEach(function (a, i) { a.style.transition = ''; a.setAttribute('stroke-dasharray', keep[i]); });
+    bars.forEach(function (b) { b.style.width = b.dataset.w; });
+  }, 40);
+}
 function strip(thumbs) {
   return thumbs && thumbs.length ? '<div class="strip">' + thumbs.map(function (t) { return '<img src="' + esc(t) + '">'; }).join('') + '</div>' : '';
 }
@@ -590,6 +625,7 @@ function renderDay(r) {
     h += '<div class="card" id="wcard"><h2>WEIGHT</h2>' + (wr ? '<div class="exrow" style="border:0;padding:2px 0 0"><div><b>体重</b><div class="sub">' + (wp ? '前回 ' + r1(wp.kg) + ' kg（' + dlabel(wp.date).split('（')[0] + '）' : '初めての記録') + '</div></div><div class="k">' + r1(wr.kg) + '<small>kg</small>' + (wp ? '<span class="wd' + (wr.kg - wp.kg > 0 ? ' up' : '') + '">' + (wr.kg - wp.kg > 0 ? '+' : '') + r1(wr.kg - wp.kg) + '</span>' : '') + '</div></div>' : '<div class="sub" style="padding:6px 0 4px">まだ記録がありません</div>') + '</div>';
     if (isMine()) h += '<div class="fab"><button id="add">＋ 食事</button><button id="addEx" class="ink">＋ 運動</button><button id="addW" class="ghostfab">＋ 体重</button></div>';
     main.innerHTML = h;
+    fx('day|' + S.viewId + '|' + S.date);
     fillCheer();
     $('#prev').onclick = function () { S.date = addDays(S.date, -1); viewDay(); };
     $('#next').onclick = function () { S.date = addDays(S.date, 1); viewDay(); };
@@ -1030,6 +1066,7 @@ function renderAna(d) {
   });
   h += '</table></div>';
   main.innerHTML = h;
+  fx('ana|' + S.viewId + '|' + S.range);
   document.querySelectorAll('[data-r]').forEach(function (b) { b.onclick = function () { S.range = +b.dataset.r; viewAna(); }; });
   document.querySelectorAll('tr[data-d],rect[data-bd]').forEach(function (el) { el.onclick = function () { S.date = el.dataset.d || el.dataset.bd; S.tab = 'day'; show(); window.scrollTo(0, 0); }; });
 }
@@ -1038,11 +1075,11 @@ function barChart(days, goal) {
   var bw = W / days.length, ph = H - top - bot, s = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="margin-top:16px">';
   days.forEach(function (d, i) {
     var h = nt(d) / max * ph, over = goal && nt(d) > goal;
-    s += '<rect x="' + (i * bw + bw * 0.2) + '" y="' + (top + ph - h) + '" width="' + (bw * 0.6) + '" height="' + h + '" rx="' + Math.min(4, bw * 0.3) + '" fill="' + (over ? '#c0392b' : '#E8691A') + '" opacity="' + (d.v ? 1 : 0) + '"/>';
+    s += '<rect class="bc" style="animation-delay:' + (0.2 + i * Math.min(0.05, 0.9 / days.length)).toFixed(3) + 's" x="' + (i * bw + bw * 0.2) + '" y="' + (top + ph - h) + '" width="' + (bw * 0.6) + '" height="' + h + '" rx="' + Math.min(4, bw * 0.3) + '" fill="' + (over ? '#c0392b' : '#E8691A') + '" opacity="' + (d.v ? 1 : 0) + '"/>';
     s += '<rect data-bd="' + d.d + '" x="' + (i * bw) + '" y="0" width="' + bw + '" height="' + H + '" fill="transparent" style="cursor:pointer"/>';
     if (days.length <= 14 || i % 5 === 0) s += '<text x="' + (i * bw + bw / 2) + '" y="' + (H - 6) + '" font-size="9" text-anchor="middle" fill="#8a847d">' + parseDate(d.d).getDate() + '</text>';
   });
-  if (goal) { var y = top + ph - goal / max * ph; s += '<line x1="0" x2="' + W + '" y1="' + y + '" y2="' + y + '" stroke="#1f1d1b" stroke-dasharray="2 4" stroke-width="1"/><text x="' + W + '" y="' + (y - 4) + '" font-size="9" text-anchor="end" fill="#1f1d1b">目標 ' + goal + '</text>'; }
+  if (goal) { var y = top + ph - goal / max * ph; s += '<g class="gl"><line x1="0" x2="' + W + '" y1="' + y + '" y2="' + y + '" stroke="#1f1d1b" stroke-dasharray="2 4" stroke-width="1"/><text x="' + W + '" y="' + (y - 4) + '" font-size="9" text-anchor="end" fill="#1f1d1b">目標 ' + goal + '</text></g>'; }
   return s + '</svg>';
 }
 
@@ -1123,8 +1160,8 @@ function lineChart(ws, tgt) {
   });
   var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="margin-top:16px">';
   if (tgt != null) s += '<line x1="' + p + '" x2="' + W + '" y1="' + yOf(tgt) + '" y2="' + yOf(tgt) + '" stroke="#1f1d1b" stroke-dasharray="2 4"/><text x="' + W + '" y="' + (yOf(tgt) - 4) + '" font-size="9" text-anchor="end" fill="#1f1d1b">目標 ' + tgt + '</text>';
-  s += '<polyline fill="none" stroke="#E8691A" stroke-width="1.8" stroke-linejoin="round" points="' + pts.map(function (q) { return q.join(','); }).join(' ') + '"/>';
-  pts.forEach(function (q) { s += '<circle cx="' + q[0] + '" cy="' + q[1] + '" r="3" fill="#fff" stroke="#E8691A" stroke-width="1.6"/>'; });
+  s += '<polyline class="lc" pathLength="1" fill="none" stroke="#E8691A" stroke-width="1.8" stroke-linejoin="round" points="' + pts.map(function (q) { return q.join(','); }).join(' ') + '"/>';
+  pts.forEach(function (q, i) { s += '<circle class="lp" style="animation-delay:' + (0.15 + 1.3 * (i + 1) / pts.length).toFixed(2) + 's" cx="' + q[0] + '" cy="' + q[1] + '" r="3" fill="#fff" stroke="#E8691A" stroke-width="1.6"/>'; });
   s += '<text x="2" y="14" font-size="9" fill="#8a847d">' + r1(mx) + '</text><text x="2" y="' + (H - 24) + '" font-size="9" fill="#8a847d">' + r1(mn) + '</text>';
   s += '<text x="' + p + '" y="' + (H - 6) + '" font-size="9" fill="#8a847d">' + dlabel(ws[0].date).split('（')[0] + '</text><text x="' + (W - 4) + '" y="' + (H - 6) + '" font-size="9" text-anchor="end" fill="#8a847d">' + dlabel(ws[ws.length - 1].date).split('（')[0] + '</text>';
   return s + '</svg>';
