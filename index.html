@@ -329,12 +329,13 @@ function goalHeader() {
   var cur = curKg(S.viewId), start = +u.startKg || cur, tgt = r1(start - u.goalKg), left = r1(cur - tgt);
   var pct = Math.max(0, Math.min(100, (start - cur) / u.goalKg * 100));
   var days = u.goalDate ? Math.ceil((parseDate(u.goalDate) - parseDate(S.today)) / 86400000) : null;
-  var sub;
-  if (left <= 0) sub = '目標達成！　現在 ' + cur + ' kg';
+  /* スタート（いつ・何kg）→ 現在 → 目標 */
+  var sd = u.startDate || String(u.createdAt || '').slice(0, 10), sl = sd ? '（' + (+sd.slice(5, 7)) + '/' + (+sd.slice(8, 10)) + '）' : '';
+  var sub = 'スタート ' + r1(start) + ' kg' + sl + ' → 現在 ' + cur + ' kg → 目標 ' + tgt + ' kg';
+  if (left <= 0) sub += '<br>目標達成！';
   else {
-    sub = '現在 ' + cur + ' kg → 目標 ' + tgt + ' kg（あと ' + left + ' kg';
+    sub += '<br>あと ' + left + ' kg';
     if (days > 0) sub += '・週 ' + r1(left / (days / 7)) + ' kg';
-    sub += '）';
   }
   return '<div class="goal" data-goal="1"><div class="gl">GOAL　' + esc(u.goalName || '目標') + 'まで</div>' +
     '<div class="gt">目標 ' + tgt + ' kg' + (days != null ? '<span>' + (days > 0 ? 'あと ' + untilText(u.goalDate) : (days === 0 ? '今日です' : '期限を過ぎました')) + '</span>' : '') + '</div>' +
