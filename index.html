@@ -448,7 +448,7 @@ function show() {
   document.querySelectorAll('[data-t]').forEach(function (b) { b.onclick = function () { S.tab = b.dataset.t; show(); }; });
   ({ day: viewDay, ana: viewAna, settings: viewSettings })[S.tab]();
   /* 記録画面が出た後、分析のデータを裏で先読み(開いたとき即表示) */
-  if (!S.pre && S.tab === 'day' && !S.creating) { S.pre = 1; setTimeout(function () { var u = S.viewId, k = 'a|' + u; if (S.cache[k]) return; api('api_range', u, addDays(S.today, -29), S.today).then(function (r) { if (!S.cache[k]) S.cache[k] = { s: '', data: { r: r, ws: S.wl[u] || [] } }; }).catch(function () {}); }, 2500); }
+  if (!S.pre && S.tab === 'day' && !S.creating) { S.pre = 1; setTimeout(function () { var u = S.viewId, k = 'a|' + u; if (S.cache[k]) return; api('api_range', u, '2020-01-01', S.today).then(function (r) { if (!S.cache[k]) S.cache[k] = { s: '', data: { r: r, ws: S.wl[u] || [] } }; }).catch(function () {}); }, 2500); }
 }
 function isMine() { return S.viewId === S.me; }
 
@@ -1028,25 +1028,28 @@ function toJpeg(im, max, q) {
 
 /* ---------- 履歴 ---------- */
 function viewAna() {
-  /* 通信は30日分を1回だけ(体重は起動時データを再利用)。7/14日の切替は端末内で即時 */
+  /* 通信は全期間を1回だけ(体重は起動時データを再利用)。14日/30日/全期間の切替は端末内で即時 */
   var key = 'a|' + S.viewId, uid = S.viewId;
   swr(key, function () {
-    return api('api_range', uid, addDays(S.today, -29), S.today).then(function (r) { return { r: r, ws: S.wl[uid] || [] }; });
+    return api('api_range', uid, '2020-01-01', S.today).then(function (r) { return { r: r, ws: S.wl[uid] || [] }; });
   }, function (d) { d.ws = S.wl[uid] || d.ws; renderAna(d); }, function () { return S.tab === 'ana' && key === 'a|' + S.viewId; });
 }
 function renderAna(d) {
-  var r = d.r, ws = d.ws || [], u = user(S.viewId), main = $('#main'), from = addDays(S.today, -(S.range - 1));
+  var r = d.r, ws = d.ws || [], u = user(S.viewId), main = $('#main');
   S.wl[S.viewId] = ws;
+  /* 全期間＝最初の記録日（食事・運動・体重）から今日まで */
+  var first = S.today; r.meals.concat(r.exs, ws).forEach(function (x) { if (x.date && x.date < first) first = x.date; });
+  var nd = S.range === 'all' ? Math.max(14, Math.round((parseDate(S.today) - parseDate(first)) / 864e5) + 1) : S.range, from = addDays(S.today, -(nd - 1));
   var by = {}, ex = {}, wd = {};
   r.meals.forEach(function (m) { by[m.date] = (by[m.date] || 0) + (+m.kcal || 0); });
   r.exs.forEach(function (x) { ex[x.date] = (ex[x.date] || 0) + (+x.kcal || 0); });
   ws.forEach(function (w) { wd[w.date] = w.kg; });
-  var days = []; for (var i = 0; i < S.range; i++) { var dd = addDays(from, i); days.push({ d: dd, v: Math.round(by[dd] || 0), e: Math.round(ex[dd] || 0), w: wd[dd] }); }
+  var days = []; for (var i = 0; i < nd; i++) { var dd = addDays(from, i); days.push({ d: dd, v: Math.round(by[dd] || 0), e: Math.round(ex[dd] || 0), w: wd[dd] }); }
   var rec = days.filter(function (x) { return x.v > 0; }), avg = rec.length ? Math.round(rec.reduce(function (a, x) { return a + x.v; }, 0) / rec.length) : 0;
   var net = rec.length ? Math.round(rec.reduce(function (a, x) { return a + x.v - x.e; }, 0) / rec.length) : 0;
   var exd = days.filter(function (x) { return x.e > 0; }).length;
   var goal = +u.kcal || 0;
-  var h = '<div class="chips" style="margin:14px 0 0">' + [7, 14, 30].map(function (n) { return '<button class="chip' + (S.range === n ? ' on' : '') + '" data-r="' + n + '">' + n + '日</button>'; }).join('') + '</div>';
+  var h = '<div class="chips" style="margin:14px 0 0">' + [14, 30, 'all'].map(function (n) { return '<button class="chip' + (S.range === n ? ' on' : '') + '" data-r="' + n + '">' + (n === 'all' ? '全期間' : n + '日') + '</button>'; }).join('') + '</div>';
   /* 体重 */
   var inR = ws.filter(function (w) { return w.date >= from; }), wv = inR.length >= 2 ? inR : ws;
   if (ws.length) {
@@ -1056,7 +1059,7 @@ function renderAna(d) {
   } else h += '<div class="card"><h2>WEIGHT</h2><div class="empty">' + deco('pointy', 'x') + '<div class="sub">体重の記録はまだありません</div></div></div>';
   /* カロリー */
   h += '<div class="card"><h2>CALORIES</h2><div class="anarow"><div><small>1日の平均（運動を引いたトータル）</small><span class="big" style="font-size:38px">' + net + '</span><span class="sub"> kcal</span></div></div>' +
-    '<div class="sub" style="margin-top:8px">' + (goal ? '目標 ' + goal + ' kcal　' : '') + '運動した日　' + exd + ' / ' + S.range + ' 日</div>' + barChart(days, goal) + '</div>';
+    '<div class="sub" style="margin-top:8px">' + (goal ? '目標 ' + goal + ' kcal　' : '') + '運動した日　' + exd + ' / ' + nd + ' 日</div>' + barChart(days, goal) + '</div>';
   /* 日別 */
   h += '<div class="card"><h2>DAILY</h2><table>';
   days.slice().reverse().forEach(function (x) {
@@ -1067,7 +1070,7 @@ function renderAna(d) {
   h += '</table></div>';
   main.innerHTML = h;
   fx('ana|' + S.viewId + '|' + S.range);
-  document.querySelectorAll('[data-r]').forEach(function (b) { b.onclick = function () { S.range = +b.dataset.r; viewAna(); }; });
+  document.querySelectorAll('[data-r]').forEach(function (b) { b.onclick = function () { S.range = b.dataset.r === 'all' ? 'all' : +b.dataset.r; viewAna(); }; });
   document.querySelectorAll('tr[data-d],rect[data-bd]').forEach(function (el) { el.onclick = function () { S.date = el.dataset.d || el.dataset.bd; S.tab = 'day'; show(); window.scrollTo(0, 0); }; });
 }
 function barChart(days, goal) {
@@ -1077,7 +1080,7 @@ function barChart(days, goal) {
     var h = nt(d) / max * ph, over = goal && nt(d) > goal;
     s += '<rect class="bc" style="animation-delay:' + (0.2 + i * Math.min(0.05, 0.9 / days.length)).toFixed(3) + 's" x="' + (i * bw + bw * 0.2) + '" y="' + (top + ph - h) + '" width="' + (bw * 0.6) + '" height="' + h + '" rx="' + Math.min(4, bw * 0.3) + '" fill="' + (over ? '#c0392b' : '#E8691A') + '" opacity="' + (d.v ? 1 : 0) + '"/>';
     s += '<rect data-bd="' + d.d + '" x="' + (i * bw) + '" y="0" width="' + bw + '" height="' + H + '" fill="transparent" style="cursor:pointer"/>';
-    if (days.length <= 14 || i % 5 === 0) s += '<text x="' + (i * bw + bw / 2) + '" y="' + (H - 6) + '" font-size="9" text-anchor="middle" fill="#8a847d">' + parseDate(d.d).getDate() + '</text>';
+    if (days.length <= 14 || i % Math.max(5, Math.ceil(days.length / 7)) === 0) s += '<text x="' + (i * bw + bw / 2) + '" y="' + (H - 6) + '" font-size="9" text-anchor="middle" fill="#8a847d">' + parseDate(d.d).getDate() + '</text>';
   });
   if (goal) { var y = top + ph - goal / max * ph; s += '<g class="gl"><line x1="0" x2="' + W + '" y1="' + y + '" y2="' + y + '" stroke="#1f1d1b" stroke-dasharray="2 4" stroke-width="1"/><text x="' + W + '" y="' + (y - 4) + '" font-size="9" text-anchor="end" fill="#1f1d1b">目標 ' + goal + '</text></g>'; }
   return s + '</svg>';
