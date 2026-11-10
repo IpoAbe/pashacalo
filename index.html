@@ -1215,6 +1215,26 @@ function viewSettings() {
 }
 
 boot();
+/* 新しい版の自動反映: アプリに戻った時（最短60秒おき）にこのページを取り直し、中身が変わっていれば読み込み直す。
+   入力中（シートが開いている）・保存中は待って、閉じた後の次の復帰で反映 */
+(function () {
+  var base = null, last = 0;
+  function hash(t) { var h = 0; for (var i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0; return h; }
+  function get() { return fetch(location.pathname + '?v=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : null; }).then(function (t) { return t ? hash(t) : null; }).catch(function () { return null; }); }
+  get().then(function (h) { base = h; last = Date.now(); });
+  function check() {
+    if (document.visibilityState !== 'visible' || base == null || Date.now() - last < 60000) return;
+    last = Date.now();
+    get().then(function (h) {
+      if (h == null || h === base) return;
+      if ($('#modal') || document.querySelector('.spin')) return;
+      location.reload();
+    });
+  }
+  document.addEventListener('visibilitychange', check);
+  window.addEventListener('pageshow', check);
+  window.addEventListener('focus', check);
+})();
 </script>
 </body>
 </html>
