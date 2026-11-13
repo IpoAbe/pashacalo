@@ -1239,9 +1239,9 @@ document.addEventListener('click', function (ev) {
     var m = S.meals.filter(function (x) { return x.id === k.slice(2); })[0];
     if (m) list = (m.thumbs || []).map(function (th, i) { return { thumb: th, full: (m.fulls || [])[i] || '' }; });
   }
-  if (list.length) openLB(list, +t.dataset.i || 0);
+  if (list.length) openLB(list, +t.dataset.i || 0, k.indexOf('m:') === 0 ? k.slice(2) : '');
 }, true);
-function openLB(list, idx) {
+function openLB(list, idx, mealId) {
   var old = $('#lb'); if (old) old.remove();
   var d = document.createElement('div'); d.id = 'lb';
   d.innerHTML = '<div class="lbbar"><span class="lbc"></span><button class="lbx" aria-label="閉じる">×</button></div>' +
@@ -1261,7 +1261,12 @@ function openLB(list, idx) {
     if (f && f.indexOf('data:') === 0) { img.src = f; return; }
     if (f && LBC[f]) { img.src = LBC[f]; return; }
     img.src = it.thumb;
-    if (!f) { note.textContent = 'この写真は縮小版のみ保存されています（この機能より前の記録）'; return; }
+    if (!f) {
+      note.innerHTML = '縮小版しか保存されていない写真です（機能追加前の記録）' +
+        (mealId && isMine() ? '<br><button class="lbrep" style="margin-top:10px;border:0;border-radius:999px;background:#E8691A;color:#fff;font-size:14px;padding:11px 20px;letter-spacing:.06em">カメラロールから元画像を選んで差し替える</button>' : '');
+      var rb = note.querySelector('.lbrep'); if (rb) rb.onclick = function () { replaceFull(mealId, idx, rb); };
+      return;
+    }
     var sp = document.createElement('span'); sp.className = 'spin lbld'; view.appendChild(sp);
     note.textContent = '元の画像を読み込み中…';
     api('api_photo', f).then(function (u) { LBC[f] = u; if (my === tok) { img.src = u; note.textContent = ''; } })
@@ -1269,6 +1274,32 @@ function openLB(list, idx) {
       .then(function () { sp.remove(); });
   }
   function close() { d.remove(); }
+  /* 古い記録: 同じ写真をカメラロールから選び直して元画像を付ける */
+  function replaceFull(mid, i, btn) {
+    var inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*';
+    inp.onchange = function () {
+      var f = inp.files[0]; if (!f) return;
+      var m = S.meals.filter(function (x) { return x.id === mid; })[0]; if (!m) return;
+      btn.disabled = true; btn.innerHTML = '<span class="spin"></span>保存中…';
+      var u = URL.createObjectURL(f), im = new Image();
+      im.onload = function () {
+        var th = toJpeg(im, 160, 0.6), full = toJpeg(im, 1280, 0.8); URL.revokeObjectURL(u);
+        var items = []; try { items = JSON.parse(m.items || '[]'); } catch (e) {}
+        if (!items.length) items = [{ name: m.name, kcal: m.kcal, p: m.p, f: m.f, c: m.c }];
+        var thumbs = (m.thumbs || []).slice(), fulls = thumbs.map(function (t, j) { return (m.fulls || [])[j] || ''; });
+        thumbs[i] = th; fulls[i] = full;
+        saveEdit({ id: m.id, date: m.date, time: m.time, type: m.type, name: m.name, items: items, thumbs: thumbs, fulls: fulls, tch: true, note: m.note, createdAt: m.createdAt }).then(function (ok) {
+          if (!ok) { btn.disabled = false; btn.textContent = 'カメラロールから元画像を選んで差し替える'; return; }
+          list[i] = { thumb: th, full: full }; dirty(); viewDay();
+          if ($('#lb') === d) go(i);
+          toast('元画像を保存しました');
+        });
+      };
+      im.onerror = function () { toast('この写真は読み込めませんでした'); btn.disabled = false; btn.textContent = 'カメラロールから元画像を選んで差し替える'; };
+      im.src = u;
+    };
+    inp.click();
+  }
   d.querySelector('.lbx').onclick = close;
   if (list.length > 1) { d.querySelector('.lbarr.l').onclick = function () { go(idx - 1); }; d.querySelector('.lbarr.r').onclick = function () { go(idx + 1); }; }
   /* タッチ: 1本指=スワイプ（拡大中は移動）、2本指=ピンチ、ダブルタップ=2.5倍切替、背景タップ=閉じる */
