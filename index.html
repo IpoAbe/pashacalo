@@ -251,6 +251,18 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .wnum span{font-size:16px;color:var(--sub)}
 .anarow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .anarow small{display:block;font-size:11.5px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px}
+/* 写真の拡大表示 */
+.strip img,.thumbs img{cursor:zoom-in}
+#lb{position:fixed;inset:0;z-index:60;background:#0c0b0a;display:flex;flex-direction:column;touch-action:none;animation:lbIn .18s ease-out}
+@keyframes lbIn{from{opacity:0}to{opacity:1}}
+#lb .lbv{flex:1;position:relative;overflow:hidden}
+#lb .lbv img{position:absolute;left:50%;top:50%;max-width:100%;max-height:100%;transform-origin:center center;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;will-change:transform}
+#lb .lbbar{display:flex;align-items:center;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top)) 14px 8px;color:#fff;font-size:13px;letter-spacing:.1em}
+#lb .lbx{width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.16);color:#fff;font-size:24px;line-height:40px;padding:0}
+#lb .lbn{min-height:18px;padding:8px 16px calc(14px + env(safe-area-inset-bottom));color:rgba(255,255,255,.7);font-size:12px;text-align:center;letter-spacing:.06em}
+#lb .lbarr{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:56px;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:26px;border-radius:12px;z-index:2}
+#lb .lbarr.l{left:8px}#lb .lbarr.r{right:8px}
+#lb .lbld{position:absolute;right:14px;bottom:10px;z-index:2}
 </style>
 </head>
 <body>
@@ -487,8 +499,8 @@ function fx(key) {
     bars.forEach(function (b) { b.style.width = b.dataset.w; });
   }, 40);
 }
-function strip(thumbs) {
-  return thumbs && thumbs.length ? '<div class="strip">' + thumbs.map(function (t) { return '<img src="' + esc(t) + '">'; }).join('') + '</div>' : '';
+function strip(thumbs, key) {
+  return thumbs && thumbs.length ? '<div class="strip">' + thumbs.map(function (t, i) { return '<img src="' + esc(t) + '" data-lb="' + esc(key) + '" data-i="' + i + '">'; }).join('') + '</div>' : '';
 }
 /* 日付タップで開くカレンダー。日付を押すとその日の記録へ */
 var CM = null;
@@ -614,7 +626,7 @@ function renderDay(r) {
     if (!S.meals.length) h += '<div class="empty">' + deco('bear', 'x') + '<div class="sub">まだ記録がありません</div></div>';
     S.meals.forEach(function (m) {
       h += '<div class="meal" data-m="' + esc(m.id) + '"><div class="mh"><div class="t"><b>' + esc(m.name) + '</b><span class="sub"><span class="tag t-' + esc(m.type) + '">' + esc(m.type) + '</span>' + esc(m.time) + '　P' + Math.round(m.p) + ' F' + Math.round(m.f) + ' C' + Math.round(m.c) + '</span></div>' +
-        '<div class="k">' + Math.round(m.kcal) + '<small>kcal</small></div></div>' + strip(m.thumbs) + '</div>';
+        '<div class="k">' + Math.round(m.kcal) + '<small>kcal</small></div></div>' + strip(m.thumbs, 'm:' + m.id) + '</div>';
     });
     h += '</div><div class="card">' + deco(S.exs.length ? 'happy' : 'walk') + '<h2>EXERCISE' + (burn ? '　<span style="letter-spacing:.04em;color:var(--ink)">−' + Math.round(burn) + ' kcal</span>' : '') + '</h2>';
     if (!S.exs.length) h += '<div class="sub" style="padding:6px 0 4px">まだ記録がありません</div>';
@@ -817,10 +829,10 @@ function openMeal(m) {
   var now = new Date();
   if (m) {
     var items = []; try { items = JSON.parse(m.items || '[]'); } catch (e) {}
-    E = { id: m.id, stage: 'edit', images: [], thumbs: (m.thumbs || []).slice(), tch: false, hint: '', share: '', tags: [], name: m.name, type: m.type, date: m.date, time: m.time, oldThumbs: m.thumbs || [], items: items, note: m.note, createdAt: m.createdAt, conf: '', notes: '' };
+    E = { id: m.id, stage: 'edit', images: [], thumbs: (m.thumbs || []).slice(), fulls: (m.thumbs || []).map(function (t, i) { return (m.fulls || [])[i] || ''; }), tch: false, hint: '', share: '', tags: [], name: m.name, type: m.type, date: m.date, time: m.time, oldThumbs: m.thumbs || [], items: items, note: m.note, createdAt: m.createdAt, conf: '', notes: '' };
     if (!items.length) E.items = [{ name: m.name, kcal: m.kcal, p: m.p, f: m.f, c: m.c }];
   } else {
-    E = { id: '', stage: 'input', images: [], thumbs: [], tch: false, hint: '', share: '', tags: [], name: '', type: mealTypeNow(), date: S.date, time: pad(now.getHours()) + ':' + pad(now.getMinutes()), oldThumbs: [], items: [], note: '', conf: '', notes: '' };
+    E = { id: '', stage: 'input', images: [], thumbs: [], fulls: [], tch: false, hint: '', share: '', tags: [], name: '', type: mealTypeNow(), date: S.date, time: pad(now.getHours()) + ':' + pad(now.getMinutes()), oldThumbs: [], items: [], note: '', conf: '', notes: '' };
   }
   renderMeal();
 }
@@ -838,7 +850,7 @@ function saveEdit(e) {
   var t = sum(e.items);
   if (!e.items.length || !t.kcal) { toast('カロリーを入力してください'); return Promise.resolve(false); }
   var items = e.items.map(function (i) { return { name: i.name, amount_text: i.amount_text || '', kcal: +i.kcal || 0, p: +i.p || 0, f: +i.f || 0, c: +i.c || 0 }; });
-  return api('api_saveMeal', { id: e.id, userId: S.me, date: e.date, time: e.time, type: e.type, name: e.name || items[0].name || '食事', kcal: t.kcal, p: t.p, f: t.f, c: t.c, items: items, thumb: e.thumbs[0] || '', thumbs: e.tch ? e.thumbs : undefined, note: e.note, createdAt: e.createdAt })
+  return api('api_saveMeal', { id: e.id, userId: S.me, date: e.date, time: e.time, type: e.type, name: e.name || items[0].name || '食事', kcal: t.kcal, p: t.p, f: t.f, c: t.c, items: items, thumb: e.thumbs[0] || '', thumbs: e.tch ? e.thumbs : undefined, fulls: e.tch ? e.fulls : undefined, note: e.note, createdAt: e.createdAt })
     .then(function () { return true; }).catch(function (er) { toast(er.message); return false; });
 }
 function finishMeal(btn) {
@@ -856,7 +868,7 @@ function renderMeal() {
   if (E.stage === 'input') {
     h += '<h3>食事を追加</h3><div class="sub" style="line-height:1.7">食事や栄養成分表示の写真を選んでください（最大' + MAX_IMG + '枚）。写真なしで、文字だけでも計算できます。</div>';
     if (E.images.length) {
-      h += '<div class="thumbs">' + E.images.map(function (im, i) { return '<div><img src="' + im.url + '"><b data-rm="' + i + '">×</b></div>'; }).join('') + '</div><div class="sub">' + E.images.length + ' / ' + MAX_IMG + ' 枚</div>';
+      h += '<div class="thumbs">' + E.images.map(function (im, i) { return '<div><img src="' + im.url + '" data-lb="EI" data-i="' + i + '"><b data-rm="' + i + '">×</b></div>'; }).join('') + '</div><div class="sub">' + E.images.length + ' / ' + MAX_IMG + ' 枚</div>';
     }
     if (E.images.length < MAX_IMG) h += '<div class="pick2" style="grid-template-columns:1fr"><button id="pick"><span>＋</span>写真を選ぶ・撮る<br><small class="sub">ライブラリから複数選択、またはその場で撮影</small></button></div>';
     h += '<label class="f">取り分け（大皿・みんなで食べる料理の、自分の分）</label>' + shareUI() +
@@ -867,7 +879,7 @@ function renderMeal() {
   } else {
     var t = sum(E.items), th = E.thumbs;
     h += '<h3>' + (E.id ? '記録を編集' : '計算結果') + (E.conf ? ' <span class="badge">確度 ' + ({ high: '高', medium: '中', low: '低' }[E.conf] || '') + '</span>' : '') + '</h3>';
-    h += '<div class="thumbs">' + th.map(function (s, i) { return '<div><img src="' + esc(s) + '" style="width:58px;height:58px;border-radius:14px"><b data-rt="' + i + '">×</b></div>'; }).join('') + (th.length < MAX_IMG ? '<div class="add-ph" id="addph">＋</div>' : '') + '</div>';
+    h += '<div class="thumbs">' + th.map(function (s, i) { return '<div><img src="' + esc(s) + '" data-lb="E" data-i="' + i + '" style="width:58px;height:58px;border-radius:14px"><b data-rt="' + i + '">×</b></div>'; }).join('') + (th.length < MAX_IMG ? '<div class="add-ph" id="addph">＋</div>' : '') + '</div>';
     if (E.notes) h += '<div class="note">' + esc(E.notes) + '</div>';
     h += '<label class="f">名前</label><input id="name" value="' + esc(E.name) + '">' +
       '<div class="grid2"><div><label class="f">日付</label><input type="date" id="date" value="' + esc(E.date) + '"></div><div><label class="f">時刻</label><input type="time" id="time" value="' + esc(E.time) + '"></div></div>' +
@@ -932,7 +944,7 @@ function bindMeal() {
       autoSave(); renderMeal();
     };
   });
-  document.querySelectorAll('#modal [data-rt]').forEach(function (b) { b.onclick = function () { E.thumbs.splice(+b.dataset.rt, 1); E.tch = true; autoSave(); renderMeal(); }; });
+  document.querySelectorAll('#modal [data-rt]').forEach(function (b) { b.onclick = function () { E.thumbs.splice(+b.dataset.rt, 1); E.fulls.splice(+b.dataset.rt, 1); E.tch = true; autoSave(); renderMeal(); }; });
   if (q('#addph')) q('#addph').onclick = function () { $('#file').click(); };
   q('#aigo').onclick = function () {
     var ins = q('#aiins').value.trim(); if (!ins) return toast('直したい内容を入れてください');
@@ -966,7 +978,7 @@ function analyze() {
     });
     E.name = r.dish_name || ''; E.conf = r.confidence; E.notes = r.notes || '';
     if (+E.share && +E.share < 100) E.note = '取り分け ' + E.share + '%';
-    if (E.images.length) { E.thumbs = E.images.map(function (i) { return i.thumb; }); E.tch = true; }
+    if (E.images.length) { E.thumbs = E.images.map(function (i) { return i.thumb; }); E.fulls = E.images.map(function (i) { return i.url; }); E.tch = true; }
     if (!E.items.length) toast('食べ物を読み取れませんでした。補足を足してお試しください');
     E.stage = 'edit'; autoSave(); renderMeal();
   }).catch(function (e) {
@@ -983,7 +995,7 @@ function saveMeal() {
   var th = E.thumbs;
   api('api_saveMeal', {
     id: E.id, userId: S.me, date: E.date, time: E.time, type: E.type, name: E.name || items[0].name || '食事',
-    kcal: t.kcal, p: t.p, f: t.f, c: t.c, items: items, thumb: th[0] || '', thumbs: E.tch ? th : undefined, note: E.note, createdAt: E.createdAt
+    kcal: t.kcal, p: t.p, f: t.f, c: t.c, items: items, thumb: th[0] || '', thumbs: E.tch ? th : undefined, fulls: E.tch ? E.fulls : undefined, note: E.note, createdAt: E.createdAt
   }).then(function () { dirty(); S.date = E.date; closeMeal(true); S.tab = 'day'; show(); toast('保存しました'); })
     .catch(function (e) { toast(e.message); btn.disabled = false; btn.textContent = '保存する'; });
 }
@@ -1004,7 +1016,7 @@ function loadFiles(files) {
         var u = URL.createObjectURL(f), im = new Image();
         im.onload = function () {
           try {
-          if (edit) { mine.thumbs.push(toJpeg(im, 160, 0.6)); mine.tch = true; if (mine === E) autoSave(); }
+          if (edit) { mine.thumbs.push(toJpeg(im, 160, 0.6)); mine.fulls.push(toJpeg(im, 1280, 0.8)); mine.tch = true; if (mine === E) autoSave(); }
           else {
             var full = toJpeg(im, mx, q), th = toJpeg(im, 160, 0.6);
             mine.images.push({ url: full, data: full.split(',')[1], thumb: th });
@@ -1214,6 +1226,95 @@ function viewSettings() {
   };
 }
 
+/* ---------- 写真の拡大表示（タップで元画像・2本指で拡大・左右スワイプで切替） ---------- */
+var LBC = {};
+document.addEventListener('click', function (ev) {
+  var t = ev.target;
+  if (!t || !t.dataset || !t.dataset.lb) return;
+  ev.stopPropagation(); ev.preventDefault();
+  var k = t.dataset.lb, list = [];
+  if (k === 'E' && E) list = E.thumbs.map(function (th, i) { return { thumb: th, full: E.fulls[i] || '' }; });
+  else if (k === 'EI' && E) list = E.images.map(function (im) { return { thumb: im.thumb, full: im.url }; });
+  else if (k.indexOf('m:') === 0) {
+    var m = S.meals.filter(function (x) { return x.id === k.slice(2); })[0];
+    if (m) list = (m.thumbs || []).map(function (th, i) { return { thumb: th, full: (m.fulls || [])[i] || '' }; });
+  }
+  if (list.length) openLB(list, +t.dataset.i || 0);
+}, true);
+function openLB(list, idx) {
+  var old = $('#lb'); if (old) old.remove();
+  var d = document.createElement('div'); d.id = 'lb';
+  d.innerHTML = '<div class="lbbar"><span class="lbc"></span><button class="lbx" aria-label="閉じる">×</button></div>' +
+    '<div class="lbv"><img alt="">' + (list.length > 1 ? '<button class="lbarr l" aria-label="前へ">‹</button><button class="lbarr r" aria-label="次へ">›</button>' : '') + '</div><div class="lbn"></div>';
+  document.body.appendChild(d);
+  var img = d.querySelector('.lbv img'), view = d.querySelector('.lbv'), cnt = d.querySelector('.lbc'), note = d.querySelector('.lbn');
+  var sc = 1, tx = 0, ty = 0, tok = 0;
+  function apply(anim) { img.style.transition = anim ? 'transform .2s' : 'none'; img.style.transform = 'translate(-50%,-50%) translate(' + tx + 'px,' + ty + 'px) scale(' + sc + ')'; }
+  function fit() { var vw = view.clientWidth, vh = view.clientHeight; img.style.maxWidth = vw + 'px'; img.style.maxHeight = vh + 'px'; if (img.naturalWidth && img.naturalWidth < vw && img.naturalHeight < vh) { var r = Math.min(vw / img.naturalWidth, vh / img.naturalHeight); img.style.width = Math.round(img.naturalWidth * r) + 'px'; } else img.style.width = ''; }
+  img.onload = fit;
+  function go(i) {
+    idx = (i + list.length) % list.length; sc = 1; tx = 0; ty = 0; apply(false);
+    var it = list[idx], my = ++tok;
+    cnt.textContent = list.length > 1 ? (idx + 1) + ' / ' + list.length : '';
+    note.textContent = '';
+    var f = it.full;
+    if (f && f.indexOf('data:') === 0) { img.src = f; return; }
+    if (f && LBC[f]) { img.src = LBC[f]; return; }
+    img.src = it.thumb;
+    if (!f) { note.textContent = 'この写真は縮小版のみ保存されています（この機能より前の記録）'; return; }
+    var sp = document.createElement('span'); sp.className = 'spin lbld'; view.appendChild(sp);
+    note.textContent = '元の画像を読み込み中…';
+    api('api_photo', f).then(function (u) { LBC[f] = u; if (my === tok) { img.src = u; note.textContent = ''; } })
+      .catch(function (e) { if (my === tok) note.textContent = '元の画像を読み込めませんでした: ' + e.message; })
+      .then(function () { sp.remove(); });
+  }
+  function close() { d.remove(); }
+  d.querySelector('.lbx').onclick = close;
+  if (list.length > 1) { d.querySelector('.lbarr.l').onclick = function () { go(idx - 1); }; d.querySelector('.lbarr.r').onclick = function () { go(idx + 1); }; }
+  /* タッチ: 1本指=スワイプ（拡大中は移動）、2本指=ピンチ、ダブルタップ=2.5倍切替、背景タップ=閉じる */
+  var st = null, lastTap = 0;
+  function dist(t) { var x = t[0].clientX - t[1].clientX, y = t[0].clientY - t[1].clientY; return Math.sqrt(x * x + y * y); }
+  view.addEventListener('touchstart', function (e) {
+    if (e.target.classList.contains('lbarr')) return;
+    e.preventDefault();
+    if (e.touches.length === 2) st = { pinch: true, d: dist(e.touches), sc: sc };
+    else if (e.touches.length === 1) st = { x: e.touches[0].clientX, y: e.touches[0].clientY, tx: tx, ty: ty, t: Date.now(), moved: false };
+  }, { passive: false });
+  view.addEventListener('touchmove', function (e) {
+    if (!st) return; e.preventDefault();
+    if (st.pinch && e.touches.length === 2) { sc = Math.max(1, Math.min(6, st.sc * dist(e.touches) / st.d)); if (sc === 1) { tx = 0; ty = 0; } apply(false); return; }
+    if (st.pinch || e.touches.length !== 1) return;
+    var dx = e.touches[0].clientX - st.x, dy = e.touches[0].clientY - st.y;
+    if (Math.abs(dx) > 6 || Math.abs(dy) > 6) st.moved = true;
+    if (sc > 1) { tx = st.tx + dx; ty = st.ty + dy; } else { tx = dx; ty = 0; }
+    apply(false);
+  }, { passive: false });
+  view.addEventListener('touchend', function (e) {
+    if (!st) return;
+    if (e.touches.length) { if (st.pinch && e.touches.length === 1) st = { x: e.touches[0].clientX, y: e.touches[0].clientY, tx: tx, ty: ty, t: Date.now(), moved: true }; return; }
+    var s0 = st; st = null;
+    if (s0.pinch) return;
+    if (sc === 1) {
+      if (s0.moved && list.length > 1 && Math.abs(tx) > 60) { go(idx + (tx < 0 ? 1 : -1)); return; }
+      if (s0.moved && Math.abs(tx) <= 60) { tx = 0; apply(true); return; }
+    }
+    if (!s0.moved) {
+      var now = Date.now();
+      if (now - lastTap < 300) { lastTap = 0; if (sc > 1) { sc = 1; tx = 0; ty = 0; } else sc = 2.5; apply(true); return; }
+      lastTap = now;
+      var onImg = e.changedTouches[0] && document.elementFromPoint(e.changedTouches[0].clientX, e.changedTouches[0].clientY) === img;
+      if (!onImg && sc === 1) setTimeout(function () { if (lastTap === now && $('#lb') === d) close(); }, 300);
+    }
+  });
+  /* PC: クリックで背景なら閉じる・ダブルクリックで拡大・矢印キー */
+  view.addEventListener('click', function (e) { if (e.target === view) close(); });
+  img.addEventListener('dblclick', function () { if (sc > 1) { sc = 1; tx = 0; ty = 0; } else sc = 2.5; apply(true); });
+  function key(e) { if (!document.body.contains(d)) return document.removeEventListener('keydown', key); if (e.key === 'Escape') close(); if (e.key === 'ArrowLeft') go(idx - 1); if (e.key === 'ArrowRight') go(idx + 1); }
+  document.addEventListener('keydown', key);
+  window.addEventListener('resize', fit);
+  go(idx);
+}
+
 boot();
 /* 新しい版の自動反映: アプリに戻った時（最短60秒おき）にこのページを取り直し、中身が変わっていれば読み込み直す。
    入力中（シートが開いている）・保存中は待って、閉じた後の次の復帰で反映 */
@@ -1227,7 +1328,7 @@ boot();
     last = Date.now();
     get().then(function (h) {
       if (h == null || h === base) return;
-      if ($('#modal') || document.querySelector('.spin')) return;
+      if ($('#modal') || $('#lb') || document.querySelector('.spin')) return;
       location.reload();
     });
   }
