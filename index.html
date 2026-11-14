@@ -163,6 +163,19 @@ h2:before{content:"";width:3px;height:11px;border-radius:2px;background:var(--ac
 @keyframes pop{from{transform:scale(0);opacity:0}to{transform:none;opacity:1}}
 .anim .gl{opacity:0;animation:fadein .5s ease .9s forwards}
 @keyframes fadein{to{opacity:1}}
+/* 夕食後・目標内のクラッカー演出 */
+#party{position:fixed;inset:0;z-index:45;pointer-events:none}
+#party canvas{position:absolute;inset:0;width:100%;height:100%}
+#party .pop{position:absolute;bottom:calc(150px + env(safe-area-inset-bottom));font-size:54px;line-height:1;animation:popIn .5s cubic-bezier(.2,1.6,.4,1) both}
+#party .pop.l{left:6px;transform:rotate(8deg)}
+#party .pop.r{right:6px;transform:scaleX(-1) rotate(8deg)}
+#party .pcard{position:absolute;left:50%;top:34%;width:min(300px,calc(100% - 48px));transform:translate(-50%,-50%);background:#fff8e6;border-radius:18px;padding:18px 18px 14px;text-align:center;box-shadow:0 14px 40px rgba(31,29,27,.22);pointer-events:auto;animation:pcIn .55s .12s cubic-bezier(.2,1.5,.4,1) both;font-family:"Yomogi","Klee","Hannotate SC","Yuji Syuku",cursive;color:#3a3430}
+#party .pcard b{display:block;font-size:30px;color:var(--accent);letter-spacing:.04em}
+#party .pcard p{margin:6px 0 0;font-size:15px;line-height:1.6}
+#party .pcard small{display:block;margin-top:8px;font-size:11px;color:var(--sub)}
+#party.out .pcard,#party.out .pop{transition:opacity .5s;opacity:0}
+@keyframes popIn{0%{opacity:0;translate:0 40px}100%{opacity:1;translate:0 0}}
+@keyframes pcIn{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
 @media (prefers-reduced-motion:reduce){.anim .bc,.anim .lc,.anim .lp,.anim .gl{animation:none;opacity:1;stroke-dashoffset:0}.rarc,.pfc .bar>i{transition:none}}
 .pfc b{font-size:18px}
 .bar{height:4px}
@@ -600,6 +613,84 @@ function fillCheer() {
   if (c) return dy(c.data);
   api('api_day', S.me, ys).then(function (d) { S.cache[key] = { s: JSON.stringify(d), data: d }; dy(d); }).catch(function () {});
 }
+/* 夕食後（夕食を記録して18時以降、または21時以降）に目標内ならクラッカー演出。1日1回。カードをタップでもう一度 */
+var PARTY_AC = null;
+function partyAudio() {
+  try { if (!PARTY_AC) { var A = window.AudioContext || window.webkitAudioContext; if (!A) return null; PARTY_AC = new A(); } if (PARTY_AC.state === 'suspended') PARTY_AC.resume(); } catch (e) { return null; }
+  return PARTY_AC;
+}
+document.addEventListener('touchend', function () { partyAudio(); }, { once: true, passive: true });
+document.addEventListener('click', function () { partyAudio(); }, { once: true });
+function partySound() {
+  var ac = partyAudio(); if (!ac || ac.state !== 'running') return;
+  var t0 = ac.currentTime + .02, sr = ac.sampleRate;
+  var noise = function (at, dur, vol, freq) {
+    var b = ac.createBuffer(1, Math.ceil(sr * dur), sr), d = b.getChannelData(0);
+    for (var i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3);
+    var src = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+    src.buffer = b; f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = .7; g.gain.value = vol;
+    src.connect(f); f.connect(g); g.connect(ac.destination); src.start(at);
+  };
+  noise(t0, .18, 1.6, 1400);            // パーン
+  noise(t0 + .015, .09, 1, 3200);
+  for (var i = 0; i < 14; i++) noise(t0 + .12 + Math.random() * .6, .03, .25 + Math.random() * .25, 2500 + Math.random() * 4000); // パラパラ
+  [1047, 1319, 1568, 2093].forEach(function (hz, i) {   // ピロリン
+    var o = ac.createOscillator(), g = ac.createGain(), at = t0 + .22 + i * .09;
+    o.type = 'triangle'; o.frequency.value = hz;
+    g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(.18, at + .01); g.gain.exponentialRampToValueAtTime(.001, at + .5);
+    o.connect(g); g.connect(ac.destination); o.start(at); o.stop(at + .55);
+  });
+}
+function party(left) {
+  var old = $('#party'); if (old) old.remove();
+  var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var wrap = document.createElement('div'); wrap.id = 'party';
+  wrap.innerHTML = '<canvas></canvas><div class="pop l">🎉</div><div class="pop r">🎉</div>' +
+    '<div class="pcard"><b>おめでとう！</b><p>今日は目標内で着地！<br>残り <b style="display:inline;font-size:20px">' + Math.round(left) + '</b> kcal</p><small>タップでもう一度 🎉</small></div>';
+  document.body.appendChild(wrap);
+  partySound();
+  var timer = setTimeout(function () { wrap.classList.add('out'); setTimeout(function () { wrap.remove(); }, 520); }, 5200);
+  wrap.querySelector('.pcard').onclick = function () { clearTimeout(timer); party(left); };
+  if (still) return;
+  var cv = wrap.querySelector('canvas'), dpr = window.devicePixelRatio || 1, W = innerWidth, H = innerHeight;
+  cv.width = W * dpr; cv.height = H * dpr; var cx = cv.getContext('2d'); cx.scale(dpr, dpr);
+  var cols = ['#E8691A', '#F7B27A', '#FFD25A', '#F38BA0', '#6CB4EE', '#1f1d1b', '#fff3c4'], ps = [], oy = H - 180;
+  [[30, -1], [W - 30, 1]].forEach(function (o) {
+    for (var i = 0; i < 90; i++) {
+      var a = (-90 - o[1] * (18 + Math.random() * 32)) * Math.PI / 180, v = 9 + Math.random() * 10;
+      ps.push({ x: o[0], y: oy, vx: Math.cos(a) * v, vy: Math.sin(a) * v, r: Math.random() * 6.28, vr: (Math.random() - .5) * .4, w: 5 + Math.random() * 6, h: 3 + Math.random() * 9, c: cols[i % cols.length], s: Math.random() < .25, ph: Math.random() * 6.28 });
+    }
+  });
+  var t0 = Date.now(), D = 4200;
+  (function frame() {
+    if (!wrap.isConnected) return;
+    var t = Date.now() - t0; cx.clearRect(0, 0, W, H);
+    cx.globalAlpha = t > D - 900 ? Math.max(0, (D - t) / 900) : 1;
+    ps.forEach(function (p) {
+      p.vx *= .985; p.vy = p.vy * .985 + .22; p.x += p.vx + Math.sin(t / 220 + p.ph) * .6; p.y += p.vy; p.r += p.vr;
+      cx.save(); cx.translate(p.x, p.y); cx.rotate(p.r); cx.fillStyle = p.c;
+      if (p.s) { cx.beginPath(); cx.arc(0, 0, p.w / 2.2, 0, 6.28); cx.fill(); } else cx.fillRect(-p.w / 2, -p.h / 2 * Math.abs(Math.cos(p.r * 2)), p.w, p.h * Math.abs(Math.cos(p.r * 2)) + .5);
+      cx.restore();
+    });
+    if (t < D) requestAnimationFrame(frame); else cx.clearRect(0, 0, W, H);
+  })();
+}
+function checkParty() {
+  if (!isMine() || S.date !== S.today || S.tab !== 'day') return;
+  var goal = +user(S.me).kcal || 0, hr = new Date().getHours();
+  if (!goal || !S.meals.length) return;
+  var dinner = S.meals.some(function (m) { return m.type === '夕食'; });
+  if (!(hr >= 21 || (hr >= 18 && dinner))) return;
+  var key = 'pashacalo_party', today = S.today;
+  try { if (localStorage.getItem(key) === today) return; } catch (e) {}
+  setTimeout(function () {
+    if (!isMine() || S.date !== today || S.tab !== 'day' || !$('#cheer')) return;
+    var net = sum(S.meals).kcal - S.exs.reduce(function (a, x) { return a + (+x.kcal || 0); }, 0), left = goal - net;
+    if (left < 0) return;
+    try { if (localStorage.getItem(key) === today) return; localStorage.setItem(key, today); } catch (e) {}
+    party(left);
+  }, 1200);
+}
 function viewDay() {
   var key = 'd|' + S.viewId + '|' + S.date;
   swr(key, function () { return api('api_day', S.viewId, S.date); }, renderDay, function () { return S.tab === 'day' && key === 'd|' + S.viewId + '|' + S.date; });
@@ -640,6 +731,7 @@ function renderDay(r) {
     main.innerHTML = h;
     fx('day|' + S.viewId + '|' + S.date);
     fillCheer();
+    checkParty();
     $('#prev').onclick = function () { S.date = addDays(S.date, -1); viewDay(); };
     $('#next').onclick = function () { S.date = addDays(S.date, 1); viewDay(); };
     $('#dsel').onclick = function () { openCal(); };
