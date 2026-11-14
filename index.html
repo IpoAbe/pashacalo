@@ -163,19 +163,11 @@ h2:before{content:"";width:3px;height:11px;border-radius:2px;background:var(--ac
 @keyframes pop{from{transform:scale(0);opacity:0}to{transform:none;opacity:1}}
 .anim .gl{opacity:0;animation:fadein .5s ease .9s forwards}
 @keyframes fadein{to{opacity:1}}
-/* 夕食後・目標内のクラッカー演出 */
+/* 夕食後・目標内のお祝い演出（フラッシュ＋紙吹雪） */
 #party{position:fixed;inset:0;z-index:45;pointer-events:none}
 #party canvas{position:absolute;inset:0;width:100%;height:100%}
-#party .pop{position:absolute;bottom:calc(150px + env(safe-area-inset-bottom));font-size:54px;line-height:1;animation:popIn .5s cubic-bezier(.2,1.6,.4,1) both}
-#party .pop.l{left:6px;transform:rotate(8deg)}
-#party .pop.r{right:6px;transform:scaleX(-1) rotate(8deg)}
-#party .pcard{position:absolute;left:50%;top:34%;width:min(300px,calc(100% - 48px));transform:translate(-50%,-50%);background:#fff8e6;border-radius:18px;padding:18px 18px 14px;text-align:center;box-shadow:0 14px 40px rgba(31,29,27,.22);pointer-events:auto;animation:pcIn .55s .12s cubic-bezier(.2,1.5,.4,1) both;font-family:"Yomogi","Klee","Hannotate SC","Yuji Syuku",cursive;color:#3a3430}
-#party .pcard b{display:block;font-size:30px;color:var(--accent);letter-spacing:.04em}
-#party .pcard p{margin:6px 0 0;font-size:15px;line-height:1.6}
-#party .pcard small{display:block;margin-top:8px;font-size:11px;color:var(--sub)}
-#party.out .pcard,#party.out .pop{transition:opacity .5s;opacity:0}
-@keyframes popIn{0%{opacity:0;translate:0 40px}100%{opacity:1;translate:0 0}}
-@keyframes pcIn{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+#party .flash{position:absolute;inset:0;background:#fff;opacity:0;animation:flash .7s ease-out both}
+@keyframes flash{0%{opacity:0}8%{opacity:.95}100%{opacity:0}}
 @media (prefers-reduced-motion:reduce){.anim .bc,.anim .lc,.anim .lp,.anim .gl{animation:none;opacity:1;stroke-dashoffset:0}.rarc,.pfc .bar>i{transition:none}}
 .pfc b{font-size:18px}
 .bar{height:4px}
@@ -613,7 +605,7 @@ function fillCheer() {
   if (c) return dy(c.data);
   api('api_day', S.me, ys).then(function (d) { S.cache[key] = { s: JSON.stringify(d), data: d }; dy(d); }).catch(function () {});
 }
-/* 夕食後（夕食を記録して18時以降、または21時以降）に目標内ならクラッカー演出。1日1回。カードをタップでもう一度 */
+/* 夕食後（夕食を記録して18時以降、または21時以降）に目標内ならお祝い演出（フラッシュ＋紙吹雪）。1日1回 */
 var PARTY_AC = null;
 function partyAudio() {
   try { if (!PARTY_AC) { var A = window.AudioContext || window.webkitAudioContext; if (!A) return null; PARTY_AC = new A(); } if (PARTY_AC.state === 'suspended') PARTY_AC.resume(); } catch (e) { return null; }
@@ -634,45 +626,31 @@ function partySound() {
   noise(t0, .18, 1.6, 1400);            // パーン
   noise(t0 + .015, .09, 1, 3200);
   for (var i = 0; i < 14; i++) noise(t0 + .12 + Math.random() * .6, .03, .25 + Math.random() * .25, 2500 + Math.random() * 4000); // パラパラ
-  [1047, 1319, 1568, 2093].forEach(function (hz, i) {   // ピロリン
-    var o = ac.createOscillator(), g = ac.createGain(), at = t0 + .22 + i * .09;
-    o.type = 'triangle'; o.frequency.value = hz;
-    g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(.18, at + .01); g.gain.exponentialRampToValueAtTime(.001, at + .5);
-    o.connect(g); g.connect(ac.destination); o.start(at); o.stop(at + .55);
-  });
 }
-function party(left) {
+function party() {
   var old = $('#party'); if (old) old.remove();
-  var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   var wrap = document.createElement('div'); wrap.id = 'party';
-  wrap.innerHTML = '<canvas></canvas><div class="pop l">🎉</div><div class="pop r">🎉</div>' +
-    '<div class="pcard"><b>おめでとう！</b><p>今日は目標内で着地！<br>残り <b style="display:inline;font-size:20px">' + Math.round(left) + '</b> kcal</p><small>タップでもう一度 🎉</small></div>';
+  wrap.innerHTML = '<div class="flash"></div><canvas></canvas>';
   document.body.appendChild(wrap);
   partySound();
-  var timer = setTimeout(function () { wrap.classList.add('out'); setTimeout(function () { wrap.remove(); }, 520); }, 5200);
-  wrap.querySelector('.pcard').onclick = function () { clearTimeout(timer); party(left); };
-  if (still) return;
+  if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) { setTimeout(function () { wrap.remove(); }, 800); return; }
   var cv = wrap.querySelector('canvas'), dpr = window.devicePixelRatio || 1, W = innerWidth, H = innerHeight;
   cv.width = W * dpr; cv.height = H * dpr; var cx = cv.getContext('2d'); cx.scale(dpr, dpr);
-  var cols = ['#E8691A', '#F7B27A', '#FFD25A', '#F38BA0', '#6CB4EE', '#1f1d1b', '#fff3c4'], ps = [], oy = H - 180;
-  [[30, -1], [W - 30, 1]].forEach(function (o) {
-    for (var i = 0; i < 90; i++) {
-      var a = (-90 - o[1] * (18 + Math.random() * 32)) * Math.PI / 180, v = 9 + Math.random() * 10;
-      ps.push({ x: o[0], y: oy, vx: Math.cos(a) * v, vy: Math.sin(a) * v, r: Math.random() * 6.28, vr: (Math.random() - .5) * .4, w: 5 + Math.random() * 6, h: 3 + Math.random() * 9, c: cols[i % cols.length], s: Math.random() < .25, ph: Math.random() * 6.28 });
-    }
-  });
-  var t0 = Date.now(), D = 4200;
+  var cols = ['#E8691A', '#F7B27A', '#FFD25A', '#F38BA0', '#6CB4EE', '#1f1d1b', '#fff3c4'], ps = [];
+  for (var i = 0; i < 170; i++) ps.push({ x: Math.random() * W, y: -10 - Math.random() * H * 1.1, vy: 1.6 + Math.random() * 2.4, sw: 12 + Math.random() * 26, ph: Math.random() * 6.28, sp: 600 + Math.random() * 900, r: Math.random() * 6.28, vr: (Math.random() - .5) * .16, w: 6 + Math.random() * 6, h: 4 + Math.random() * 8, c: cols[i % cols.length], s: Math.random() < .2 });
+  var t0 = Date.now(), D = 6500;
   (function frame() {
     if (!wrap.isConnected) return;
     var t = Date.now() - t0; cx.clearRect(0, 0, W, H);
-    cx.globalAlpha = t > D - 900 ? Math.max(0, (D - t) / 900) : 1;
+    cx.globalAlpha = t > D - 1000 ? Math.max(0, (D - t) / 1000) : 1;
     ps.forEach(function (p) {
-      p.vx *= .985; p.vy = p.vy * .985 + .22; p.x += p.vx + Math.sin(t / 220 + p.ph) * .6; p.y += p.vy; p.r += p.vr;
-      cx.save(); cx.translate(p.x, p.y); cx.rotate(p.r); cx.fillStyle = p.c;
-      if (p.s) { cx.beginPath(); cx.arc(0, 0, p.w / 2.2, 0, 6.28); cx.fill(); } else cx.fillRect(-p.w / 2, -p.h / 2 * Math.abs(Math.cos(p.r * 2)), p.w, p.h * Math.abs(Math.cos(p.r * 2)) + .5);
+      p.y += p.vy; p.r += p.vr;
+      var x = p.x + Math.sin(t / p.sp * 6.28 + p.ph) * p.sw, f = Math.abs(Math.cos(t / p.sp * 6.28 + p.ph));
+      cx.save(); cx.translate(x, p.y); cx.rotate(p.r); cx.fillStyle = p.c;
+      if (p.s) { cx.beginPath(); cx.arc(0, 0, p.w / 2.4, 0, 6.28); cx.fill(); } else cx.fillRect(-p.w / 2, -p.h * f / 2, p.w, p.h * f + .6);
       cx.restore();
     });
-    if (t < D) requestAnimationFrame(frame); else cx.clearRect(0, 0, W, H);
+    if (t < D) requestAnimationFrame(frame); else wrap.remove();
   })();
 }
 function checkParty() {
@@ -688,7 +666,7 @@ function checkParty() {
     var net = sum(S.meals).kcal - S.exs.reduce(function (a, x) { return a + (+x.kcal || 0); }, 0), left = goal - net;
     if (left < 0) return;
     try { if (localStorage.getItem(key) === today) return; localStorage.setItem(key, today); } catch (e) {}
-    party(left);
+    party();
   }, 1200);
 }
 function viewDay() {
