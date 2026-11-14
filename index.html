@@ -665,7 +665,7 @@ function checkParty() {
   if (!goal || !S.meals.length) return;
   var dinner = S.meals.some(function (m) { return m.type === '夕食'; });
   if (!(hr >= 21 || (hr >= 18 && dinner))) return;
-  var key = 'pashacalo_party', today = S.today;
+  var key = 'pashacalo_party2', today = S.today;
   try { if (localStorage.getItem(key) === today) return; } catch (e) {}
   setTimeout(function () {
     if (!isMine() || S.date !== today || S.tab !== 'day' || !$('#cheer')) return;
