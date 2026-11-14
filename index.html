@@ -163,11 +163,16 @@ h2:before{content:"";width:3px;height:11px;border-radius:2px;background:var(--ac
 @keyframes pop{from{transform:scale(0);opacity:0}to{transform:none;opacity:1}}
 .anim .gl{opacity:0;animation:fadein .5s ease .9s forwards}
 @keyframes fadein{to{opacity:1}}
-/* 夕食後・目標内のお祝い演出（フラッシュ＋紙吹雪） */
+/* 夕食後・目標内のお祝い演出（フラッシュ＋紙吹雪＋安部さんの顔と「ないすぅ〜！」が拡大） */
 #party{position:fixed;inset:0;z-index:45;pointer-events:none}
 #party canvas{position:absolute;inset:0;width:100%;height:100%}
 #party .flash{position:absolute;inset:0;background:#fff;opacity:0;animation:flash .7s ease-out both}
 @keyframes flash{0%{opacity:0}8%{opacity:.95}100%{opacity:0}}
+#party .zf,#party .zt{position:absolute;left:50%;top:42%;opacity:0;will-change:transform,opacity}
+#party .zf{width:70vw;max-width:340px;height:auto;animation:zoomF 3.8s .15s cubic-bezier(.5,.05,.85,.45) both}
+#party .zt{white-space:nowrap;font-family:"Yomogi","Klee","Hannotate SC","Yuji Syuku",cursive;font-size:min(16vw,72px);font-weight:700;color:var(--accent);text-shadow:0 0 6px #fff,0 0 2px #fff;top:64%;animation:zoomT 3.6s .35s cubic-bezier(.5,.05,.85,.45) both}
+@keyframes zoomF{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}12%{opacity:.3}70%{opacity:.22}100%{opacity:0;transform:translate(-50%,-50%) scale(3.6)}}
+@keyframes zoomT{0%{opacity:0;transform:translate(-50%,-50%) scale(.5) rotate(-6deg)}12%{opacity:.85}65%{opacity:.7}100%{opacity:0;transform:translate(-50%,-50%) scale(3.2) rotate(4deg)}}
 @media (prefers-reduced-motion:reduce){.anim .bc,.anim .lc,.anim .lp,.anim .gl{animation:none;opacity:1;stroke-dashoffset:0}.rarc,.pfc .bar>i{transition:none}}
 .pfc b{font-size:18px}
 .bar{height:4px}
@@ -605,7 +610,7 @@ function fillCheer() {
   if (c) return dy(c.data);
   api('api_day', S.me, ys).then(function (d) { S.cache[key] = { s: JSON.stringify(d), data: d }; dy(d); }).catch(function () {});
 }
-/* 夕食後（夕食を記録して18時以降、または21時以降）に目標内ならお祝い演出（フラッシュ＋紙吹雪）。1日1回 */
+/* 夕食後（夕食を記録して18時以降、または21時以降）に目標内ならお祝い演出（フラッシュ＋紙吹雪＋安部さんの顔と「ないすぅ〜！」が拡大）。1日1回 */
 var PARTY_AC = null;
 function partyAudio() {
   try { if (!PARTY_AC) { var A = window.AudioContext || window.webkitAudioContext; if (!A) return null; PARTY_AC = new A(); } if (PARTY_AC.state === 'suspended') PARTY_AC.resume(); } catch (e) { return null; }
@@ -630,10 +635,11 @@ function partySound() {
 function party() {
   var old = $('#party'); if (old) old.remove();
   var wrap = document.createElement('div'); wrap.id = 'party';
-  wrap.innerHTML = '<div class="flash"></div><canvas></canvas>';
+  wrap.innerHTML = '<div class="flash"></div>';
   document.body.appendChild(wrap);
   partySound();
   if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) { setTimeout(function () { wrap.remove(); }, 800); return; }
+  wrap.insertAdjacentHTML('beforeend', '<img class="zf" src="' + ABE + '" alt=""><div class="zt">ないすぅ〜！</div><canvas></canvas>');
   var cv = wrap.querySelector('canvas'), dpr = window.devicePixelRatio || 1, W = innerWidth, H = innerHeight;
   cv.width = W * dpr; cv.height = H * dpr; var cx = cv.getContext('2d'); cx.scale(dpr, dpr);
   var cols = ['#E8691A', '#F7B27A', '#FFD25A', '#F38BA0', '#6CB4EE', '#1f1d1b', '#fff3c4'], ps = [];
