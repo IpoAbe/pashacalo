@@ -610,7 +610,7 @@ function fillCheer() {
   if (c) return dy(c.data);
   api('api_day', S.me, ys).then(function (d) { S.cache[key] = { s: JSON.stringify(d), data: d }; dy(d); }).catch(function () {});
 }
-/* 夕食後（夕食を記録して18時以降、または21時以降）に目標内ならお祝い演出（フラッシュ＋紙吹雪＋安部さんの顔と「ないすぅ〜！」が拡大）。1日1回 */
+/* 前日が目標内（記録あり・摂取−運動≦目標）なら、その日最初に記録画面を開いた時にお祝い演出。1日1回 */
 var PARTY_AC = null;
 function partyAudio() {
   try { if (!PARTY_AC) { var A = window.AudioContext || window.webkitAudioContext; if (!A) return null; PARTY_AC = new A(); } if (PARTY_AC.state === 'suspended') PARTY_AC.resume(); } catch (e) { return null; }
@@ -661,19 +661,23 @@ function party() {
 }
 function checkParty() {
   if (!isMine() || S.date !== S.today || S.tab !== 'day') return;
-  var goal = +user(S.me).kcal || 0, hr = new Date().getHours();
-  if (!goal || !S.meals.length) return;
-  var dinner = S.meals.some(function (m) { return m.type === '夕食'; });
-  if (!(hr >= 21 || (hr >= 18 && dinner))) return;
-  var key = 'pashacalo_party2', today = S.today;
-  try { if (localStorage.getItem(key) === today) return; } catch (e) {}
-  setTimeout(function () {
-    if (!isMine() || S.date !== today || S.tab !== 'day' || !$('#cheer')) return;
-    var net = sum(S.meals).kcal - S.exs.reduce(function (a, x) { return a + (+x.kcal || 0); }, 0), left = goal - net;
-    if (left < 0) return;
-    try { if (localStorage.getItem(key) === today) return; localStorage.setItem(key, today); } catch (e) {}
-    party();
-  }, 1200);
+  var goal = +user(S.me).kcal || 0; if (!goal) return;
+  var pk = 'pashacalo_party3', today = S.today;
+  try { if (localStorage.getItem(pk) === today) return; } catch (e) {}
+  var ys = addDays(today, -1), key = 'd|' + S.me + '|' + ys;
+  var go = function (yd) {
+    if (!yd || !yd.meals || !yd.meals.length) return;
+    var net = sum(yd.meals).kcal - (yd.exs || []).reduce(function (a, x) { return a + (+x.kcal || 0); }, 0);
+    if (net > goal) return;
+    setTimeout(function () {
+      if (!isMine() || S.date !== today || S.tab !== 'day' || !$('#main .hero')) return;
+      try { if (localStorage.getItem(pk) === today) return; localStorage.setItem(pk, today); } catch (e) {}
+      party();
+    }, 1200);
+  };
+  var c = S.cache[key];
+  if (c) return go(c.data);
+  api('api_day', S.me, ys).then(function (d) { S.cache[key] = { s: JSON.stringify(d), data: d }; go(d); }).catch(function () {});
 }
 function viewDay() {
   var key = 'd|' + S.viewId + '|' + S.date;
