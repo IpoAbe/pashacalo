@@ -621,24 +621,32 @@ document.addEventListener('click', function () { partyAudio(); }, { once: true }
 function partySound() {
   var ac = partyAudio(); if (!ac || ac.state !== 'running') return;
   var t0 = ac.currentTime + .02, sr = ac.sampleRate;
-  var out = ac.createDynamicsCompressor(); out.threshold.value = -10; out.ratio.value = 4; out.connect(ac.destination);
-  // 残響（「パーン」の「ーン」）：短い減衰ノイズのインパルス
-  var rv = ac.createConvolver(), il = Math.ceil(sr * .7), ib = ac.createBuffer(2, il, sr);
-  for (var c = 0; c < 2; c++) { var id = ib.getChannelData(c); for (var j = 0; j < il; j++) id[j] = (Math.random() * 2 - 1) * Math.pow(1 - j / il, 4); }
-  rv.buffer = ib; var wet = ac.createGain(); wet.gain.value = .35; rv.connect(wet); wet.connect(out);
-  // 破裂音：太めのノイズ（ローパスを高→低へ下げて「パッ」→「ァン」）
-  var nl = Math.ceil(sr * .35), nb = ac.createBuffer(1, nl, sr), nd = nb.getChannelData(0);
-  for (var i = 0; i < nl; i++) nd[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / nl, 2.2);
-  var ns = ac.createBufferSource(), lp = ac.createBiquadFilter(), ng = ac.createGain();
-  ns.buffer = nb; lp.type = 'lowpass'; lp.Q.value = .8;
-  lp.frequency.setValueAtTime(6000, t0); lp.frequency.exponentialRampToValueAtTime(700, t0 + .3);
-  ng.gain.setValueAtTime(1.4, t0);
-  ns.connect(lp); lp.connect(ng); ng.connect(out); ng.connect(rv); ns.start(t0);
-  // 胴鳴り：低い「ドン」で厚みを出す
+  var out = ac.createDynamicsCompressor(); out.threshold.value = -10; out.ratio.value = 4;
+  var hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 350; hp.connect(out); out.connect(ac.destination); // 低音のドーンを切る
+  // 残響：短く明るい「ーン」
+  var rv = ac.createConvolver(), il = Math.ceil(sr * .45), ib = ac.createBuffer(2, il, sr);
+  for (var c = 0; c < 2; c++) { var id = ib.getChannelData(c); for (var j = 0; j < il; j++) id[j] = (Math.random() * 2 - 1) * Math.pow(1 - j / il, 5); }
+  rv.buffer = ib; var wet = ac.createGain(); wet.gain.value = .3; rv.connect(wet); wet.connect(hp);
+  // 破裂音：明るいノイズ（高い所から少しだけ下げる）
+  var nl = Math.ceil(sr * .22), nb = ac.createBuffer(1, nl, sr), nd = nb.getChannelData(0);
+  for (var i = 0; i < nl; i++) nd[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / nl, 2.5);
+  var ns = ac.createBufferSource(), bp = ac.createBiquadFilter(), ng = ac.createGain();
+  ns.buffer = nb; bp.type = 'bandpass'; bp.Q.value = .6;
+  bp.frequency.setValueAtTime(5000, t0); bp.frequency.exponentialRampToValueAtTime(2200, t0 + .18);
+  ng.gain.setValueAtTime(1.8, t0);
+  ns.connect(bp); bp.connect(ng); ng.connect(hp); ng.connect(rv); ns.start(t0);
+  // 「パン」の芯：高めの短いポップ（900→420Hz）
   var o = ac.createOscillator(), og = ac.createGain();
-  o.type = 'sine'; o.frequency.setValueAtTime(190, t0); o.frequency.exponentialRampToValueAtTime(55, t0 + .18);
-  og.gain.setValueAtTime(0, t0); og.gain.linearRampToValueAtTime(1.1, t0 + .004); og.gain.exponentialRampToValueAtTime(.001, t0 + .28);
-  o.connect(og); og.connect(out); og.connect(rv); o.start(t0); o.stop(t0 + .3);
+  o.type = 'triangle'; o.frequency.setValueAtTime(900, t0); o.frequency.exponentialRampToValueAtTime(420, t0 + .08);
+  og.gain.setValueAtTime(0, t0); og.gain.linearRampToValueAtTime(.7, t0 + .003); og.gain.exponentialRampToValueAtTime(.001, t0 + .12);
+  o.connect(og); og.connect(hp); og.connect(rv); o.start(t0); o.stop(t0 + .14);
+  // ハッピーなキラッ（ド・ミ・ソの高い和音を一瞬）
+  [2093, 2637, 3136].forEach(function (fq, k) {
+    var so = ac.createOscillator(), sg = ac.createGain(), st = t0 + .05 + k * .035;
+    so.type = 'sine'; so.frequency.value = fq;
+    sg.gain.setValueAtTime(0, st); sg.gain.linearRampToValueAtTime(.12, st + .01); sg.gain.exponentialRampToValueAtTime(.001, st + .5);
+    so.connect(sg); sg.connect(hp); sg.connect(rv); so.start(st); so.stop(st + .55);
+  });
 }
 function party() {
   var old = $('#party'); if (old) old.remove();
